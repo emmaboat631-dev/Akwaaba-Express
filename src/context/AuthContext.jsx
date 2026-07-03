@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { storage, KEYS } from '../services/storage';
-import { uid, hashString } from '../utils/random';
+import { uid, hashString, mulberry32, range } from '../utils/random';
 
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
@@ -14,23 +14,42 @@ const withAccountFields = (u) =>
     regNo: `AKW-${Math.floor(100000 + Math.random() * 900000)}`,
     ghanaCard: '',
     joinedISO: new Date().toISOString(),
+    role: 'passenger',
     ...u,
   };
 
-const makeUser = ({ name, phone, email }) => withAccountFields({
-  id: uid('usr'),
-  name: name?.trim() || 'Traveller',
-  phone: phone?.trim() || '',
-  email: email?.trim() || '',
-  avatarColor: AVATAR_COLORS[hashString(name || phone || 'u') % AVATAR_COLORS.length],
-  savedPlaces: [
-    { id: uid('pl'), label: 'Home', address: 'East Legon, Accra', icon: 'home' },
-    { id: uid('pl'), label: 'Work', address: 'Airport City, Accra', icon: 'work' },
-  ],
-  paymentMethods: [
-    { id: uid('pm'), type: 'momo', label: 'MTN MoMo', detail: '024 •••• 88' },
-  ],
-});
+const makeUser = ({ name, phone, email, role }) => {
+  const id = uid('usr');
+  const isDriver = role === 'driver';
+  return withAccountFields({
+    id,
+    name: name?.trim() || 'Traveller',
+    phone: phone?.trim() || '',
+    email: email?.trim() || '',
+    role: isDriver ? 'driver' : 'passenger',
+    avatarColor: AVATAR_COLORS[hashString(name || phone || 'u') % AVATAR_COLORS.length],
+    savedPlaces: [
+      { id: uid('pl'), label: 'Home', address: 'East Legon, Accra', icon: 'home' },
+      { id: uid('pl'), label: 'Work', address: 'Airport City, Accra', icon: 'work' },
+    ],
+    paymentMethods: [
+      { id: uid('pm'), type: 'momo', label: 'MTN MoMo', detail: '024 •••• 88' },
+    ],
+    // Driver-only fields — left undefined for passengers rather than padding
+    // every passenger record. `rating` is a cosmetic static seed (same
+    // convention as OPERATORS.rating elsewhere), not derived from real
+    // passenger feedback — there is no passenger-side rating flow.
+    ...(isDriver
+      ? {
+          licenseNo: '',
+          vehiclePlate: '',
+          verificationStatus: 'pending',
+          payoutMethod: null,
+          rating: +range(mulberry32(hashString(id)), 4.3, 4.9).toFixed(1),
+        }
+      : {}),
+  });
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => withAccountFields(storage.get(KEYS.user, null)));
@@ -45,6 +64,9 @@ export const AuthProvider = ({ children }) => {
       isAuthed: !!user,
       authenticate: (profile) => {
         // Restore the stored profile if the phone OR email matches, else create one.
+        // Role is decided once at signup and is immutable after — on a match,
+        // the stored account's role always wins over whatever was picked on
+        // the sign-in screen this time.
         const existing = storage.get(KEYS.user, null);
         const matches =
           existing &&
@@ -60,11 +82,11 @@ export const AuthProvider = ({ children }) => {
         storage.remove(KEYS.user);
         setUser(null);
       },
-      // Email and registration number are fixed; the Ghana Card can be set
-      // once and is locked from then on.
+      // Email, registration number and role are fixed; the Ghana Card can be
+      // set once and is locked from then on.
       updateUser: (patch) =>
         setUser((u) => {
-          const { email: _email, regNo: _regNo, ghanaCard, ...allowed } = patch;
+          const { email: _email, regNo: _regNo, role: _role, ghanaCard, ...allowed } = patch;
           const next = { ...u, ...allowed };
           if (ghanaCard?.trim() && !u.ghanaCard) next.ghanaCard = ghanaCard.trim();
           return next;
@@ -77,6 +99,15 @@ export const AuthProvider = ({ children }) => {
         setUser((u) => ({ ...u, paymentMethods: [...u.paymentMethods, { id: uid('pm'), ...pm }] })),
       removePaymentMethod: (id) =>
         setUser((u) => ({ ...u, paymentMethods: u.paymentMethods.filter((p) => p.id !== id) })),
+      // Driver-only: editing vehicle/license sends verification back to
+      // 'pending' (simulates resubmission — no real reviewer, see
+      // submitVerification below).
+      setVehicleInfo: ({ licenseNo, vehiclePlate }) =>
+        setUser((u) => ({ ...u, licenseNo, vehiclePlate, verificationStatus: 'pending' })),
+      submitVerification: () =>
+        setUser((u) => ({ ...u, verificationStatus: 'verified' })),
+      setPayoutMethod: (payoutMethod) =>
+        setUser((u) => ({ ...u, payoutMethod })),
     }),
     [user],
   );

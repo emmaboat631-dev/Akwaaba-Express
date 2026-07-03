@@ -33,4 +33,5 @@ export const KEYS = {
   recentSearches: 'recentSearches',
   draft: 'draft',
   theme: 'theme',
+  driver: 'driver',
 };
