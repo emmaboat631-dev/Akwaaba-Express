@@ -17,20 +17,22 @@ const SignIn = () => {
   if (isAuthed) return <Navigate to="/" replace />;
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const go = () => navigate(location.state?.from || '/', { replace: true });
+  // Role was fixed at signup and is restored from the account, not chosen
+  // here — go to that role's home unless returning to a same-role deep link.
+  const go = (acct) => navigate(location.state?.from || (acct.role === 'driver' ? '/driver' : '/'), { replace: true });
 
   const submit = () => {
     if (!/.+@.+\..+/.test(form.email)) { toast('Enter a valid email', 'error'); return; }
     if (form.password.length < 4) { toast('Enter your password', 'error'); return; }
-    authenticate({ email: form.email });
+    const acct = authenticate({ email: form.email });
     toast('Welcome back', 'success');
-    go();
+    go(acct);
   };
 
   const social = (provider) => {
-    authenticate({ name: '' });
+    const acct = authenticate({ name: '' });
     toast(`Signed in with ${provider}`, 'success');
-    go();
+    go(acct);
   };
 
   return (

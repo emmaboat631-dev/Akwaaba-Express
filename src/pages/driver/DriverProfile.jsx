@@ -2,33 +2,39 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
-  Pencil, Check, LogOut, Home, Briefcase, MapPin, Plus, Trash2,
-  Smartphone, CreditCard, Bell, Moon, Star, Lock,
+  Pencil, Check, LogOut, Star, Lock, ShieldCheck, ShieldAlert,
+  Smartphone, CreditCard, Bell, Moon,
 } from 'lucide-react';
 
-import { useAuth } from '../context/AuthContext';
-import { useTrips } from '../context/TripsContext';
-import { useToast } from '../context/ToastContext';
-import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import { useTheme } from '../../context/ThemeContext';
+import { PAYMENT_PROVIDERS } from '../../data/paymentProviders';
 
-import Avatar from '../components/Avatar';
-import Toggle from '../components/Toggle';
-import { PAYMENT_PROVIDERS } from '../data/paymentProviders';
+import Avatar from '../../components/Avatar';
+import Toggle from '../../components/Toggle';
 
-const PLACE_ICONS = { home: Home, work: Briefcase, other: MapPin };
+const InfoRow = ({ label, value, locked }) => (
+  <div className="flex justify-between items-center t-sm" style={{ gap: 12 }}>
+    <span className="muted no-shrink">{label}</span>
+    <span className="semibold flex items-center gap-1" style={{ minWidth: 0 }}>
+      {locked && <Lock size={11} className="muted" />}
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
+    </span>
+  </div>
+);
 
-const Profile = () => {
+const DriverProfile = () => {
   const navigate = useNavigate();
-  const { user, updateUser, logout, addSavedPlace, removeSavedPlace, addPaymentMethod, removePaymentMethod } = useAuth();
-  const { bookings } = useTrips();
+  const { user, updateUser, setVehicleInfo, submitVerification, setPayoutMethod, logout } = useAuth();
   const toast = useToast();
   const { isDark, toggleTheme } = useTheme();
 
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: user?.name || '', phone: user?.phone || '', ghanaCard: '' });
-  const [place, setPlace] = useState(null); // { label, address } | null
-  const [payForm, setPayForm] = useState(null); // { type, number, expiry } | null
-  const [settings, setSettings] = useState({ notify: true, email: false });
+  const [form, setForm] = useState({ name: user?.name || '', phone: user?.phone || '' });
+  const [vehicleForm, setVehicleForm] = useState(null); // { licenseNo, vehiclePlate } | null
+  const [payForm, setPayForm] = useState(null);
+  const [settings, setSettings] = useState({ notify: true });
 
   if (!user) return null;
 
@@ -39,11 +45,11 @@ const Profile = () => {
     toast('Profile updated', 'success');
   };
 
-  const savePlace = () => {
-    if (!place?.label?.trim() || !place?.address?.trim()) { toast('Add a label and address', 'error'); return; }
-    addSavedPlace({ label: place.label, address: place.address, icon: 'other' });
-    setPlace(null);
-    toast('Place saved', 'success');
+  const saveVehicle = () => {
+    if (!vehicleForm.licenseNo.trim() || !vehicleForm.vehiclePlate.trim()) { toast('Add your license and plate number', 'error'); return; }
+    setVehicleInfo(vehicleForm);
+    setVehicleForm(null);
+    toast('Vehicle details saved — pending verification', 'success');
   };
 
   const savePay = () => {
@@ -58,25 +64,15 @@ const Profile = () => {
     }
     const label = PAYMENT_PROVIDERS.find((p) => p.type === payForm.type).label;
     const detail = isCard ? `•••• ${digits.slice(-4)}` : `${digits.slice(0, 3)} ••• ${digits.slice(-2)}`;
-    addPaymentMethod({ type: payForm.type, label, detail });
+    setPayoutMethod({ type: payForm.type, label, detail });
     setPayForm(null);
-    toast('Payment method added', 'success');
+    toast('Payout method saved', 'success');
   };
-
-  const InfoRow = ({ label, value, locked }) => (
-    <div className="flex justify-between items-center t-sm" style={{ gap: 12 }}>
-      <span className="muted no-shrink">{label}</span>
-      <span className="semibold flex items-center gap-1" style={{ minWidth: 0 }}>
-        {locked && <Lock size={11} className="muted" />}
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
-      </span>
-    </div>
-  );
 
   return (
     <div className="screen has-nav fade-up">
       <div className="flex justify-between items-center mb-5">
-        <h1>Profile</h1>
+        <h1>Driver profile</h1>
         <button className="icon-btn" onClick={() => (editing ? saveProfile() : setEditing(true))}>
           {editing ? <Check size={18} /> : <Pencil size={17} />}
         </button>
@@ -97,85 +93,70 @@ const Profile = () => {
             <div style={{ flex: 1 }}>
               <div className="bold" style={{ fontSize: 18 }}>{user.name}</div>
               <div className="t-sm muted">{user.phone || 'No phone'}</div>
-              <div className="badge badge-primary mt-2"><Star size={11} /> {bookings.length} trips booked</div>
+              <div className="badge badge-primary mt-2"><Star size={11} fill="#F4C430" stroke="#F4C430" /> {user.rating?.toFixed(1)} rating</div>
             </div>
           )}
         </div>
-
-        {editing && !user.ghanaCard && (
-          <div style={{ marginTop: 12 }}>
-            <div className="field-label">Ghana Card — set once, cannot be changed later</div>
-            <div className="field"><input placeholder="GHA-000000000-0" value={form.ghanaCard} onChange={(e) => setForm({ ...form, ghanaCard: e.target.value })} /></div>
-          </div>
-        )}
 
         <div className="divider" style={{ margin: '14px 0' }} />
 
         <div className="flex flex-col gap-2">
           <InfoRow label="Email" value={user.email || 'Not added'} locked />
-          {!(editing && !user.ghanaCard) && (
-            <InfoRow label="Ghana Card" value={user.ghanaCard || 'Not added'} locked={!!user.ghanaCard} />
-          )}
           <InfoRow label="Registration no." value={user.regNo} locked />
           <InfoRow label="Member since" value={user.joinedISO ? format(new Date(user.joinedISO), 'MMMM yyyy') : '—'} />
         </div>
       </div>
 
-      {/* Saved places */}
+      {/* Vehicle & verification */}
       <div className="flex justify-between items-center mb-2">
-        <h3>Saved places</h3>
-        <button className="t-sm semibold" style={{ color: 'var(--primary-dark)' }} onClick={() => setPlace({ label: '', address: '' })}><Plus size={14} /> Add</button>
+        <h3>Vehicle & license</h3>
+        <span className={`badge ${user.verificationStatus === 'verified' ? 'badge-success' : 'badge-warning'}`}>
+          {user.verificationStatus === 'verified' ? <ShieldCheck size={12} /> : <ShieldAlert size={12} />}
+          {user.verificationStatus === 'verified' ? 'Verified' : 'Pending'}
+        </span>
       </div>
-      <div className="card mb-4" style={{ padding: 6 }}>
-        {user.savedPlaces.map((p) => {
-          const Icon = PLACE_ICONS[p.icon] || MapPin;
-          return (
-            <div key={p.id} className="flex items-center gap-3" style={{ padding: '12px 12px' }}>
-              <div style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--surface-2)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={17} /></div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="semibold t-sm">{p.label}</div>
-                <div className="t-xs muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.address}</div>
-              </div>
-              <button className="muted" onClick={() => { removeSavedPlace(p.id); toast('Place removed', 'info'); }}><Trash2 size={16} /></button>
-            </div>
-          );
-        })}
-        {place && (
-          <div style={{ padding: 12, borderTop: '1px solid var(--line)' }}>
-            <div className="field mb-2"><input autoFocus placeholder="Label (e.g. Gym)" value={place.label} onChange={(e) => setPlace({ ...place, label: e.target.value })} /></div>
-            <div className="field mb-3"><input placeholder="Address" value={place.address} onChange={(e) => setPlace({ ...place, address: e.target.value })} /></div>
+      <div className="card mb-4">
+        {vehicleForm ? (
+          <>
+            <div className="field-label">Driver's license no.</div>
+            <div className="field mb-2"><input value={vehicleForm.licenseNo} onChange={(e) => setVehicleForm({ ...vehicleForm, licenseNo: e.target.value })} placeholder="DVLA-000000" /></div>
+            <div className="field-label">Vehicle plate</div>
+            <div className="field mb-3"><input value={vehicleForm.vehiclePlate} onChange={(e) => setVehicleForm({ ...vehicleForm, vehiclePlate: e.target.value })} placeholder="GR 1234-24" /></div>
             <div className="flex gap-2">
-              <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={() => setPlace(null)}>Cancel</button>
-              <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={savePlace}>Save place</button>
+              <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={() => setVehicleForm(null)}>Cancel</button>
+              <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={saveVehicle}>Save</button>
             </div>
-          </div>
+          </>
+        ) : (
+          <>
+            <InfoRow label="License no." value={user.licenseNo || 'Not added'} />
+            <div className="divider" style={{ margin: '10px 0' }} />
+            <InfoRow label="Plate" value={user.vehiclePlate || 'Not added'} />
+            <div className="flex gap-2 mt-3">
+              <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={() => setVehicleForm({ licenseNo: user.licenseNo || '', vehiclePlate: user.vehiclePlate || '' })}>Edit details</button>
+              {user.verificationStatus !== 'verified' && (
+                <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={submitVerification} disabled={!user.licenseNo || !user.vehiclePlate}>Submit for verification</button>
+              )}
+            </div>
+          </>
         )}
       </div>
 
-      {/* Payment methods */}
+      {/* Payout method */}
       <div className="flex justify-between items-center mb-2">
-        <h3>Payment methods</h3>
-        <button className="t-sm semibold" style={{ color: 'var(--primary-dark)' }} onClick={() => setPayForm(payForm ? null : { type: 'momo', number: '', expiry: '' })}><Plus size={14} /> Add</button>
+        <h3>Payout method</h3>
+        {!user.payoutMethod && !payForm && (
+          <button className="t-sm semibold" style={{ color: 'var(--primary-dark)' }} onClick={() => setPayForm({ type: 'momo', number: '', expiry: '' })}>Add</button>
+        )}
       </div>
-      <div className="card mb-4" style={{ padding: 6 }}>
-        {user.paymentMethods.map((m) => {
-          const Icon = m.type === 'card' ? CreditCard : Smartphone;
-          return (
-            <div key={m.id} className="flex items-center gap-3" style={{ padding: '12px' }}>
-              <div style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={17} /></div>
-              <div style={{ flex: 1 }}><div className="semibold t-sm">{m.label}</div><div className="t-xs muted">{m.detail}</div></div>
-              <button className="muted" onClick={() => { removePaymentMethod(m.id); toast('Method removed', 'info'); }}><Trash2 size={16} /></button>
-            </div>
-          );
-        })}
-        {payForm && (
-          <div style={{ padding: 12, borderTop: '1px solid var(--line)' }}>
+      <div className="card mb-4" style={{ padding: user.payoutMethod && !payForm ? 12 : 6 }}>
+        {payForm ? (
+          <div style={{ padding: 6 }}>
             <div className="scroll-x mb-3" style={{ margin: 0, padding: 0 }}>
               {PAYMENT_PROVIDERS.map((p) => (
                 <button key={p.type} className={`chip${payForm.type === p.type ? ' active' : ''}`} onClick={() => setPayForm({ type: p.type, number: '', expiry: '' })}>{p.label}</button>
               ))}
             </div>
-
             {payForm.type === 'card' ? (
               <>
                 <div className="field-label">Card number</div>
@@ -189,12 +170,21 @@ const Profile = () => {
                 <div className="field mb-3"><Smartphone size={18} className="muted" /><input type="tel" inputMode="tel" placeholder="024 000 0000" value={payForm.number} onChange={(e) => setPayForm({ ...payForm, number: e.target.value })} /></div>
               </>
             )}
-
             <div className="flex gap-2">
               <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={() => setPayForm(null)}>Cancel</button>
               <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={savePay}>Save method</button>
             </div>
           </div>
+        ) : user.payoutMethod ? (
+          <div className="flex items-center gap-3">
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {user.payoutMethod.type === 'card' ? <CreditCard size={17} /> : <Smartphone size={17} />}
+            </div>
+            <div style={{ flex: 1 }}><div className="semibold t-sm">{user.payoutMethod.label}</div><div className="t-xs muted">{user.payoutMethod.detail}</div></div>
+            <button className="t-sm semibold" style={{ color: 'var(--primary-dark)' }} onClick={() => setPayForm({ type: user.payoutMethod.type, number: '', expiry: '' })}>Change</button>
+          </div>
+        ) : (
+          <div className="t-sm muted text-center" style={{ padding: 12 }}>No payout method added</div>
         )}
       </div>
 
@@ -204,7 +194,6 @@ const Profile = () => {
         {[
           { key: 'dark', label: 'Dark mode', icon: Moon },
           { key: 'notify', label: 'Push notifications', icon: Bell },
-          { key: 'email', label: 'Email updates', icon: Bell },
         ].map(({ key, label, icon: Icon }) => {
           const on = key === 'dark' ? isDark : settings[key];
           const handle = key === 'dark' ? toggleTheme : () => setSettings((s) => ({ ...s, [key]: !s[key] }));
@@ -221,11 +210,11 @@ const Profile = () => {
       <button className="btn btn-outline mb-4" style={{ color: 'var(--red)', borderColor: 'rgba(206,17,38,0.25)' }} onClick={() => { logout(); navigate('/welcome', { replace: true }); }}>
         <LogOut size={18} /> Log out
       </button>
-      <div className="text-center t-xs muted" style={{ paddingBottom: 16, lineHeight: 1.7 }}>
-        Akwaaba Express · Prototype v1.0
+      <div className="text-center t-xs muted" style={{ paddingBottom: 16 }}>
+        Akwaaba Express · Driver Prototype v1.0
       </div>
     </div>
   );
 };
 
-export default Profile;
+export default DriverProfile;

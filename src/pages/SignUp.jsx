@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Lock, Phone, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, Phone, Eye, EyeOff, UserRound, Bus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import SegmentedTabs from '../components/SegmentedTabs';
 
 const SignUp = () => {
   const navigate = useNavigate();
   const { authenticate, isAuthed } = useAuth();
   const toast = useToast();
 
+  const [role, setRole] = useState('passenger');
   const [form, setForm] = useState({ first: '', last: '', email: '', phone: '', password: '', confirm: '' });
   const [showPw, setShowPw] = useState(false);
 
@@ -22,9 +24,9 @@ const SignUp = () => {
     if (form.phone.replace(/\D/g, '').length < 9) { toast('Enter a valid phone number', 'error'); return; }
     if (form.password.length < 4) { toast('Password is too short', 'error'); return; }
     if (form.password !== form.confirm) { toast('Passwords do not match', 'error'); return; }
-    authenticate({ name: `${form.first} ${form.last}`.trim(), email: form.email, phone: form.phone });
+    const acct = authenticate({ name: `${form.first} ${form.last}`.trim(), email: form.email, phone: form.phone, role });
     toast('Account created. Akwaaba!', 'success');
-    navigate('/', { replace: true });
+    navigate(acct.role === 'driver' ? '/driver' : '/', { replace: true });
   };
 
   return (
@@ -37,7 +39,18 @@ const SignUp = () => {
       </div>
 
       <h1 className="mb-1">Create your account</h1>
-      <p className="muted t-sm mb-5">Join Akwaaba Express to book buses across Ghana.</p>
+      <p className="muted t-sm mb-4">Join Akwaaba Express to book buses across Ghana.</p>
+
+      <div className="mb-5">
+        <SegmentedTabs
+          value={role}
+          onChange={setRole}
+          options={[
+            { value: 'passenger', label: 'Passenger', icon: UserRound },
+            { value: 'driver', label: 'Driver', icon: Bus },
+          ]}
+        />
+      </div>
 
       <div className="flex gap-3 mb-4">
         <div style={{ flex: 1 }}>
