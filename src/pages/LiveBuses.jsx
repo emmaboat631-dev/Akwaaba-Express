@@ -2,18 +2,25 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useNearbyBuses } from '../hooks/useNearbyBuses';
+import { useRelay } from '../hooks/useRelay';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { useBriefLoad } from '../hooks/useBriefLoad';
 import BusMap from '../components/BusMap';
 import BottomSheet from '../components/BottomSheet';
 import LiveBusCard from '../components/LiveBusCard';
+import { SkeletonList } from '../components/Skeleton';
 
 const LiveBuses = () => {
   const navigate = useNavigate();
   const { position, located } = useGeolocation();
-  const buses = useNearbyBuses(position);
+  const simulated = useNearbyBuses(position);
+  const { liveBuses } = useRelay(); // real drivers online on other devices
   const [selected, setSelected] = useState(null);
+  const loading = useBriefLoad();
 
-  const sorted = useMemo(() => [...buses].sort((a, b) => a.etaMin - b.etaMin), [buses]);
+  // Real online drivers first, then the simulated background traffic.
+  const buses = useMemo(() => [...liveBuses, ...simulated], [liveBuses, simulated]);
+  const sorted = useMemo(() => [...buses].sort((a, b) => (a.etaMin ?? 99) - (b.etaMin ?? 99)), [buses]);
 
   return (
     <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
@@ -39,11 +46,15 @@ const LiveBuses = () => {
       <BottomSheet peek={46} half={0.5} full={0.88} initial="half" bottomOffset={88}>
         <h3 className="mb-1">Live buses</h3>
         <div className="t-sm muted mb-4">Tap a bus to track it and grab a seat.</div>
-        <div className="flex flex-col gap-3">
-          {sorted.map((bus) => (
-            <LiveBusCard key={bus.id} bus={bus} onClick={() => navigate(`/live/${bus.id}`)} />
-          ))}
-        </div>
+        {loading ? (
+          <SkeletonList count={5} />
+        ) : (
+          <div className="flex flex-col gap-3">
+            {sorted.map((bus) => (
+              <LiveBusCard key={bus.id} bus={bus} onClick={() => navigate(`/live/${bus.id}`)} />
+            ))}
+          </div>
+        )}
       </BottomSheet>
     </div>
   );

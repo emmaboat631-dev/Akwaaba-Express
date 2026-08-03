@@ -13,6 +13,9 @@ import SegmentedTabs from '../components/SegmentedTabs';
 import EmptyState from '../components/EmptyState';
 import PullToRefresh from '../components/PullToRefresh';
 import OperatorMark from '../components/OperatorMark';
+import { SkeletonList } from '../components/Skeleton';
+import { useBriefLoad } from '../hooks/useBriefLoad';
+import { AnimatedList, AnimatedItem } from '../components/AnimatedList';
 
 const todayISO = () => format(new Date(), 'yyyy-MM-dd');
 
@@ -49,9 +52,10 @@ const BookingRow = ({ booking, onOpen, onCancel }) => {
 
 const Trips = () => {
   const navigate = useNavigate();
-  const { bookings, cancelBooking } = useTrips();
+  const { bookings, cancelBooking, refetch } = useTrips();
   const toast = useToast();
   const [tab, setTab] = useState('upcoming');
+  const loading = useBriefLoad();
 
   const { upcoming, past } = useMemo(() => ({
     upcoming: bookings.filter((b) => !isPast(b)),
@@ -60,7 +64,10 @@ const Trips = () => {
 
   const list = tab === 'upcoming' ? upcoming : past;
 
-  const refresh = () => new Promise((r) => setTimeout(() => { toast('Up to date', 'info'); r(); }, 900));
+  const refresh = async () => {
+    await refetch();
+    toast('Up to date', 'info');
+  };
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -74,7 +81,9 @@ const Trips = () => {
       </div>
 
       <PullToRefresh onRefresh={refresh} className="has-nav" style={{ flex: 1, padding: '16px 20px 0' }}>
-        {list.length === 0 ? (
+        {loading ? (
+          <SkeletonList count={4} />
+        ) : list.length === 0 ? (
           <EmptyState
             icon={tab === 'upcoming' ? Bus : TicketIcon}
             title={tab === 'upcoming' ? 'No upcoming trips' : 'No past trips yet'}
@@ -82,16 +91,17 @@ const Trips = () => {
             action={tab === 'upcoming' && <button className="btn btn-primary btn-sm" onClick={() => navigate('/')}>Find a bus</button>}
           />
         ) : (
-          <div className="flex flex-col gap-3">
+          <AnimatedList className="flex flex-col gap-3">
             {list.map((b) => (
-              <BookingRow
-                key={b.id}
-                booking={b}
-                onOpen={() => navigate(`/ticket/${b.id}`)}
-                onCancel={tab === 'upcoming' ? () => { cancelBooking(b.id); toast('Booking cancelled', 'info'); } : undefined}
-              />
+              <AnimatedItem key={b.id}>
+                <BookingRow
+                  booking={b}
+                  onOpen={() => navigate(`/ticket/${b.id}`)}
+                  onCancel={tab === 'upcoming' ? () => { cancelBooking(b.id); toast('Booking cancelled', 'info'); } : undefined}
+                />
+              </AnimatedItem>
             ))}
-          </div>
+          </AnimatedList>
         )}
       </PullToRefresh>
     </div>

@@ -12,25 +12,34 @@ const QrScannerView = ({ onScan, onError }) => {
   useEffect(() => {
     let cancelled = false;
 
-    QrScanner.hasCamera().then((hasCamera) => {
-      if (cancelled) return;
-      if (!hasCamera || !videoRef.current) {
-        onError?.('no-camera');
-        return;
-      }
-      const scanner = new QrScanner(
-        videoRef.current,
-        (result) => onScan?.(result.data),
-        {
-          preferredCamera: 'environment',
-          highlightScanRegion: false,
-          highlightCodeOutline: false,
-          onDecodeError: () => {}, // fires continuously while no code is in frame — expected, not an error
-        },
-      );
-      scannerRef.current = scanner;
-      scanner.start().catch(() => onError?.('permission-denied'));
-    });
+    QrScanner.hasCamera()
+      .then((hasCamera) => {
+        if (cancelled) return;
+        if (!hasCamera || !videoRef.current) {
+          onError?.('no-camera');
+          return;
+        }
+        const scanner = new QrScanner(
+          videoRef.current,
+          (result) => onScan?.(result.data),
+          {
+            preferredCamera: 'environment',
+            highlightScanRegion: false,
+            highlightCodeOutline: false,
+            onDecodeError: () => {}, // fires continuously while no code is in frame — expected, not an error
+          },
+        );
+        scannerRef.current = scanner;
+        scanner.start().then(
+          () => {
+            // If the user hit back while start() was resolving, tear the
+            // now-started camera down immediately so no stream lingers.
+            if (cancelled) { scanner.stop(); scanner.destroy(); scannerRef.current = null; }
+          },
+          () => onError?.('permission-denied'),
+        );
+      })
+      .catch(() => { if (!cancelled) onError?.('no-camera'); });
 
     return () => {
       cancelled = true;

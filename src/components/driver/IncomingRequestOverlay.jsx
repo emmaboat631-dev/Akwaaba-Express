@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Check, MapPin } from 'lucide-react';
 import { formatCedi } from '../../utils/format';
+import { playIncoming } from '../../utils/sound';
 import { REQUEST_TTL_MS } from '../../services/driverHail';
 
 const RADIUS = 26;
@@ -15,6 +16,7 @@ const IncomingRequestOverlay = ({ request, onAccept, onDecline }) => {
 
   useEffect(() => {
     declinedRef.current = false;
+    playIncoming();
     const id = setInterval(() => setNow(Date.now()), 100);
     return () => clearInterval(id);
   }, [request.id]);
@@ -31,8 +33,8 @@ const IncomingRequestOverlay = ({ request, onAccept, onDecline }) => {
   const remainingSec = Math.ceil(remainingMs / 1000);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6,20,14,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <div className="card fade-up" style={{ width: '100%', maxWidth: 420, margin: '0 16px 16px', borderRadius: 'var(--r-xl)', padding: 22 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6,20,14,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div className="card pop-in" style={{ width: '100%', maxWidth: 420, borderRadius: 'var(--r-xl)', padding: 22 }}>
         <div className="flex justify-between items-center mb-4">
           <span className="semibold t-sm flex items-center gap-2"><span className="live-dot" /> New ride request</span>
           <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>

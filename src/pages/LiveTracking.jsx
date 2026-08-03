@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Users, Clock, MapPin, Star } from 'lucide-react';
 
 import { useNearbyBuses } from '../hooks/useNearbyBuses';
+import { useRelay } from '../hooks/useRelay';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useBooking } from '../context/BookingContext';
 import { operatorById, busTypeById } from '../data/operators';
@@ -18,10 +19,15 @@ const LiveTracking = () => {
   const navigate = useNavigate();
   const { busId } = useParams();
   const { position } = useGeolocation();
-  const buses = useNearbyBuses(position);
+  const simulated = useNearbyBuses(position);
+  const { liveBuses } = useRelay();
   const { startBooking } = useBooking();
 
-  const bus = useMemo(() => buses.find((b) => b.id === busId), [buses, busId]);
+  // Include relay drivers so a tapped online driver (drv_*) resolves here too.
+  const bus = useMemo(
+    () => [...liveBuses, ...simulated].find((b) => b.id === busId),
+    [liveBuses, simulated, busId],
+  );
 
   // Animate just this bus easing toward the user (map stays fixed/fitted).
   const [busPos, setBusPos] = useState(bus?.origin || position);

@@ -12,6 +12,7 @@ import DatePicker from '../components/DatePicker';
 import TripCard from '../components/TripCard';
 import EmptyState from '../components/EmptyState';
 import { TripCardSkeleton } from '../components/Skeleton';
+import { AnimatedList, AnimatedItem } from '../components/AnimatedList';
 
 const SORTS = [
   { id: 'earliest', label: 'Earliest', fn: (a, b) => a.departMins - b.departMins },
@@ -85,9 +86,13 @@ const Search = () => {
         ) : visible.length === 0 ? (
           <EmptyState icon={Frown} title="No buses found" message="Try another date, city, or bus type for this route." />
         ) : (
-          visible.map((trip) => (
-            <TripCard key={trip.id} trip={trip} onClick={() => navigate(`/trip/${trip.id}`, { state: { trip, pax: state?.pax || 1 } })} />
-          ))
+          <AnimatedList className="flex flex-col gap-3">
+            {visible.map((trip) => (
+              <AnimatedItem key={trip.id}>
+                <TripCard trip={trip} onClick={() => navigate(`/trip/${trip.id}`, { state: { trip, pax: state?.pax || 1 } })} />
+              </AnimatedItem>
+            ))}
+          </AnimatedList>
         )}
       </div>
 
