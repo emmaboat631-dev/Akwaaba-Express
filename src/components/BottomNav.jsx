@@ -1,12 +1,12 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Ticket, MapPin } from 'lucide-react';
+import { Home, Ticket, MapPin, User } from 'lucide-react';
 
-// Profile is reached via the avatar on Home, not a nav tab.
 const TABS = [
   { path: '/', icon: Home, label: 'Home' },
   { path: '/live', icon: MapPin, label: 'Live' },
   { path: '/trips', icon: Ticket, label: 'Trips' },
+  { path: '/profile', icon: User, label: 'Profile' },
 ];
 
 const BottomNav = () => {

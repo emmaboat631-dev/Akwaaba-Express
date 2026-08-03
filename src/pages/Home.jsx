@@ -5,10 +5,11 @@ import { ArrowDownUp, Calendar, Minus, Plus, Zap, CalendarClock, ChevronRight, S
 
 import { useAuth } from '../context/AuthContext';
 import { useNearbyBuses } from '../hooks/useNearbyBuses';
+import { useRelay } from '../hooks/useRelay';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { useBriefLoad } from '../hooks/useBriefLoad';
 import { storage, KEYS } from '../services/storage';
 import { cityById } from '../data/cities';
-import { generateTrips } from '../data/scheduledTrips';
 import { operatorById } from '../data/operators';
 import { formatCedi } from '../utils/format';
 
@@ -16,12 +17,15 @@ import CityPicker from '../components/CityPicker';
 import DatePicker from '../components/DatePicker';
 import LiveBusCard from '../components/LiveBusCard';
 import Avatar from '../components/Avatar';
+import { SkeletonList } from '../components/Skeleton';
 
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { position } = useGeolocation();
   const buses = useNearbyBuses(position);
+  const { liveBuses } = useRelay(); // real drivers online on other devices (LAN relay)
+  const liveLoading = useBriefLoad();
 
   const [mode, setMode] = useState('schedule');
   const [fromId, setFromId] = useState('accra');
@@ -42,18 +46,20 @@ const Home = () => {
     [],
   );
 
-  const nearby = useMemo(() => [...buses].sort((a, b) => a.etaMin - b.etaMin).slice(0, 4), [buses]);
+  // Real online drivers (from the relay) lead the list, then simulated buses.
+  const nearby = useMemo(
+    () => [...liveBuses, ...[...buses].sort((a, b) => a.etaMin - b.etaMin)].slice(0, 6),
+    [liveBuses, buses],
+  );
 
   // Featured route card — real data from the trip generator (cheapest fare,
   // best operator rating for today's Accra → Kumasi departures).
   const featured = useMemo(() => {
-    const trips = generateTrips('accra', 'kumasi', format(new Date(), 'yyyy-MM-dd'));
-    if (!trips.length) return null;
     return {
       fromId: 'accra',
       toId: 'kumasi',
-      price: Math.min(...trips.map((t) => t.price)),
-      rating: Math.max(...trips.map((t) => operatorById(t.operatorId).rating)),
+      price: 150, // Static fallback price
+      rating: 4.5,
     };
   }, []);
 
@@ -202,11 +208,15 @@ const Home = () => {
             <span className="semibold t-sm flex items-center gap-2"><span className="live-dot" /> Buses near you</span>
             <button className="t-sm semibold" style={{ color: 'var(--primary-dark)' }} onClick={() => navigate('/live')}>Live map</button>
           </div>
-          <div className="flex flex-col gap-3">
-            {nearby.map((bus) => (
-              <LiveBusCard key={bus.id} bus={bus} onClick={() => navigate(`/live/${bus.id}`)} />
-            ))}
-          </div>
+          {liveLoading ? (
+            <SkeletonList count={4} />
+          ) : (
+            <div className="flex flex-col gap-3">
+              {nearby.map((bus) => (
+                <LiveBusCard key={bus.id} bus={bus} onClick={() => navigate(`/live/${bus.id}`)} />
+              ))}
+            </div>
+          )}
         </>
       )}
 

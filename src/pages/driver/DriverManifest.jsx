@@ -21,7 +21,7 @@ const DriverManifest = () => {
 
   if (!trip) {
     return (
-      <div className="screen has-nav">
+      <div className="screen">
         <Header title="Manifest" />
         <EmptyState icon={Bus} title="Trip not found" action={<button className="btn btn-primary btn-sm" onClick={() => navigate('/driver')}>Back to dashboard</button>} />
       </div>
@@ -47,7 +47,7 @@ const DriverManifest = () => {
         : { label: 'Trip completed', onClick: () => {}, disabled: true };
 
   return (
-    <div className="screen has-nav fade-up">
+    <div className="screen fade-up">
       <Header
         title="Passenger manifest"
         subtitle={`${from.name} → ${to.name}`}

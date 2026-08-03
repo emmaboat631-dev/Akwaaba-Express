@@ -3,16 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
   Pencil, Check, LogOut, Star, Lock, ShieldCheck, ShieldAlert,
-  Smartphone, CreditCard, Bell, Moon,
+  Smartphone, CreditCard, Bell, Moon, ChevronRight,
 } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useTheme } from '../../context/ThemeContext';
 import { PAYMENT_PROVIDERS } from '../../data/paymentProviders';
+import { operatorById, busTypeById } from '../../data/operators';
+
+import OperatorMark from '../../components/OperatorMark';
 
 import Avatar from '../../components/Avatar';
 import Toggle from '../../components/Toggle';
+import PhoneInput from '../../components/PhoneInput';
 
 const InfoRow = ({ label, value, locked }) => (
   <div className="flex justify-between items-center t-sm" style={{ gap: 12 }}>
@@ -26,15 +30,18 @@ const InfoRow = ({ label, value, locked }) => (
 
 const DriverProfile = () => {
   const navigate = useNavigate();
-  const { user, updateUser, setVehicleInfo, submitVerification, setPayoutMethod, logout } = useAuth();
+  const { user, updateUser, submitVerification, setPayoutMethod, logout } = useAuth();
   const toast = useToast();
   const { isDark, toggleTheme } = useTheme();
 
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: user?.name || '', phone: user?.phone || '' });
-  const [vehicleForm, setVehicleForm] = useState(null); // { licenseNo, vehiclePlate } | null
   const [payForm, setPayForm] = useState(null);
   const [settings, setSettings] = useState({ notify: true });
+
+  const operator = user?.operatorId ? operatorById(user.operatorId) : null;
+  const busType = user?.busTypeId ? busTypeById(user.busTypeId) : null;
+  const vehicleComplete = !!(user?.operatorId && user?.busTypeId && user?.vehiclePlate && user?.vehicleModel && user?.licenseNo);
 
   if (!user) return null;
 
@@ -43,13 +50,6 @@ const DriverProfile = () => {
     updateUser(form);
     setEditing(false);
     toast('Profile updated', 'success');
-  };
-
-  const saveVehicle = () => {
-    if (!vehicleForm.licenseNo.trim() || !vehicleForm.vehiclePlate.trim()) { toast('Add your license and plate number', 'error'); return; }
-    setVehicleInfo(vehicleForm);
-    setVehicleForm(null);
-    toast('Vehicle details saved — pending verification', 'success');
   };
 
   const savePay = () => {
@@ -87,7 +87,7 @@ const DriverProfile = () => {
               <div className="field-label">Full name</div>
               <div className="field mb-2"><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Name" /></div>
               <div className="field-label">Phone</div>
-              <div className="field"><input type="tel" inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="024 000 0000" /></div>
+              <div className="field"><PhoneInput value={form.phone} onChange={(digits) => setForm((f) => ({ ...f, phone: digits }))} /></div>
             </div>
           ) : (
             <div style={{ flex: 1 }}>
@@ -116,29 +116,36 @@ const DriverProfile = () => {
         </span>
       </div>
       <div className="card mb-4">
-        {vehicleForm ? (
+        {vehicleComplete ? (
           <>
-            <div className="field-label">Driver's license no.</div>
-            <div className="field mb-2"><input value={vehicleForm.licenseNo} onChange={(e) => setVehicleForm({ ...vehicleForm, licenseNo: e.target.value })} placeholder="DVLA-000000" /></div>
-            <div className="field-label">Vehicle plate</div>
-            <div className="field mb-3"><input value={vehicleForm.vehiclePlate} onChange={(e) => setVehicleForm({ ...vehicleForm, vehiclePlate: e.target.value })} placeholder="GR 1234-24" /></div>
-            <div className="flex gap-2">
-              <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={() => setVehicleForm(null)}>Cancel</button>
-              <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={saveVehicle}>Save</button>
+            <div className="flex items-center gap-3 mb-3">
+              {operator && <OperatorMark operator={operator} size={44} />}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="semibold">{operator?.name}</div>
+                <div className="t-xs muted">{busType?.name} · {user.vehicleModel}{user.vehicleColor ? ` · ${user.vehicleColor}` : ''}</div>
+              </div>
             </div>
-          </>
-        ) : (
-          <>
-            <InfoRow label="License no." value={user.licenseNo || 'Not added'} />
+            <InfoRow label="Plate" value={user.vehiclePlate} />
             <div className="divider" style={{ margin: '10px 0' }} />
-            <InfoRow label="Plate" value={user.vehiclePlate || 'Not added'} />
+            <InfoRow label="License no." value={user.licenseNo} />
             <div className="flex gap-2 mt-3">
-              <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={() => setVehicleForm({ licenseNo: user.licenseNo || '', vehiclePlate: user.vehiclePlate || '' })}>Edit details</button>
+              <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={() => navigate('/driver/setup')}>Edit profile</button>
               {user.verificationStatus !== 'verified' && (
-                <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={submitVerification} disabled={!user.licenseNo || !user.vehiclePlate}>Submit for verification</button>
+                <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={submitVerification}>Submit for verification</button>
               )}
             </div>
           </>
+        ) : (
+          <button className="flex items-center gap-3 w-full" style={{ padding: 6, textAlign: 'left' }} onClick={() => navigate('/driver/setup')}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface-2)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ShieldAlert size={19} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="semibold t-sm">Complete your vehicle profile</div>
+              <div className="t-xs muted">Passengers see this on their ticket</div>
+            </div>
+            <ChevronRight size={18} className="muted" />
+          </button>
         )}
       </div>
 
@@ -167,7 +174,7 @@ const DriverProfile = () => {
             ) : (
               <>
                 <div className="field-label">Mobile money number</div>
-                <div className="field mb-3"><Smartphone size={18} className="muted" /><input type="tel" inputMode="tel" placeholder="024 000 0000" value={payForm.number} onChange={(e) => setPayForm({ ...payForm, number: e.target.value })} /></div>
+                <div className="field mb-3"><Smartphone size={18} className="muted" /><PhoneInput value={payForm.number} onChange={(digits) => setPayForm((f) => ({ ...f, number: digits }))} /></div>
               </>
             )}
             <div className="flex gap-2">

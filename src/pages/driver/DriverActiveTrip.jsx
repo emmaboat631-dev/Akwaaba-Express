@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, MapPin, Users, Navigation } from 'lucide-react';
 
@@ -10,6 +10,7 @@ import { findAssignedTripById } from '../../data/driverTrips';
 import { operatorById, busTypeById } from '../../data/operators';
 import { cityById } from '../../data/cities';
 import { formatCedi, minutesToClock } from '../../utils/format';
+import { relay } from '../../services/relay';
 
 import BusMap from '../../components/BusMap';
 import BottomSheet from '../../components/BottomSheet';
@@ -31,6 +32,19 @@ const DriverActiveTrip = () => {
   const isHail = !!requestId;
   const trip = !isHail ? findAssignedTripById(tripId) : null;
   const request = isHail ? hail.activeRequest : null;
+
+  // If the passenger cancels while the driver is en route, tear the trip
+  // down cleanly and bounce back to the dashboard.
+  useEffect(() => {
+    if (!isHail) return undefined;
+    return relay.onMessage((m) => {
+      if (m.type === 'hail:cancelled' && (m.requestId === requestId || m.requestId == null)) {
+        hail.completeActive();
+        toast('Passenger cancelled the trip', 'info');
+        navigate('/driver', { replace: true });
+      }
+    });
+  }, [isHail, requestId, hail, navigate, toast]);
 
   if ((isHail && !request) || (!isHail && !trip)) {
     return (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Armchair } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 // Interactive seat picker. `cols` describes the layout either side of the aisle
 // (e.g. [2,2] standard, [2,1] VIP). Free seats report taps via onToggle;
@@ -21,9 +22,16 @@ const SeatMap = ({ cols = [2, 2], total = 44, taken = [], selected = [], onToggl
       onToggle?.(n);
     };
     return (
-      <div key={n} className={cls} onClick={handle}>
+      <motion.div
+        key={n}
+        className={cls}
+        onClick={handle}
+        whileTap={isTaken ? {} : { scale: 0.82 }}
+        animate={isSel ? { scale: [1, 1.18, 1] } : { scale: 1 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 22, duration: 0.29 }}
+      >
         {isSel ? <Armchair size={16} /> : n}
-      </div>
+      </motion.div>
     );
   };
 

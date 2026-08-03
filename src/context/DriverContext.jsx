@@ -11,6 +11,8 @@ const DriverContext = createContext(null);
 export const useDriver = () => useContext(DriverContext);
 
 const EMPTY = {
+  mode: 'live', // 'live' (accepting live hails) | 'scheduled' (on a fixed trip, no live pop-ups)
+  liveDestinationId: null, // where the driver is heading while on live
   assignedTripId: null,
   assignedTripStatus: 'scheduled', // 'scheduled' | 'in-progress' | 'completed'
   completedTrips: [],
@@ -92,6 +94,9 @@ export const DriverProvider = ({ children }) => {
 
       recordAccept: () => setState((s) => ({ ...s, acceptedCount: s.acceptedCount + 1 })),
       recordDecline: () => setState((s) => ({ ...s, declinedCount: s.declinedCount + 1 })),
+
+      setMode: (mode) => setState((s) => ({ ...s, mode })),
+      setLiveDestination: (liveDestinationId) => setState((s) => ({ ...s, liveDestinationId })),
 
       // Tracks time spent online today — called when the dashboard's toggle flips.
       setOnline: (isOnline) =>

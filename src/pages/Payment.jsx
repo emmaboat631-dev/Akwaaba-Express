@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTrips } from '../context/TripsContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
+import { relay } from '../services/relay';
 import { operatorById } from '../data/operators';
 import { cityById } from '../data/cities';
 import { formatCedi } from '../utils/format';
@@ -50,7 +51,7 @@ const Payment = () => {
 
   if (!trip) {
     return (
-      <div className="screen has-nav">
+      <div className="screen">
         <Header title="Payment" />
         <EmptyState icon={Bus} title="Nothing to pay for" action={<button className="btn btn-primary btn-sm" onClick={() => navigate('/')}>Find a bus</button>} />
       </div>
@@ -65,8 +66,11 @@ const Payment = () => {
       const payment = { type: method.type, label: method.label };
       await api.pay({ amount: total, method: payment });
       setPayment(payment);
-      const booking = await api.createBooking({ ...draft, payment, amount: total, fee: BOOKING_FEE, unit, qty });
+      const booking = await api.createBooking({ ...draft, paymentMethod: payment, breakdown: { total, fee: BOOKING_FEE, unit, qty } }, user?.id);
       addBooking(booking);
+      // Share to the LAN relay so a driver on another device can verify this
+      // ticket by scanning its QR (no backend to look it up otherwise).
+      relay.send('booking:new', { booking });
       reset();
       toast('Payment successful', 'success');
       navigate(`/ticket/${booking.id}`, { replace: true });
@@ -80,7 +84,7 @@ const Payment = () => {
   const operator = operatorById(trip.operatorId);
 
   return (
-    <div className="screen has-nav fade-up">
+    <div className="screen fade-up">
       <Header title="Payment" />
 
       {/* Summary */}

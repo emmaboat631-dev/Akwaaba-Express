@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Check, Star, Clock, Bus } from 'lucide-react';
+import { Check, Star, Clock } from 'lucide-react';
 
 import { api } from '../services/api';
 import { useBooking } from '../context/BookingContext';
@@ -9,8 +9,8 @@ import { operatorById, busTypeById } from '../data/operators';
 import { formatCedi, formatMinutes, minutesToClock } from '../utils/format';
 
 import Header from '../components/Header';
-import EmptyState from '../components/EmptyState';
 import OperatorMark from '../components/OperatorMark';
+import { SkeletonLine } from '../components/Skeleton';
 
 const TripDetails = () => {
   const navigate = useNavigate();
@@ -26,9 +26,17 @@ const TripDetails = () => {
 
   if (!trip) {
     return (
-      <div className="screen has-nav">
-        <Header title="Trip" />
-        <EmptyState icon={Bus} title="Loading trip…" />
+      <div className="screen fade-up">
+        <Header title="Trip details" />
+        <div className="card mb-4 flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <SkeletonLine w={46} h={46} r={14} />
+            <div style={{ flex: 1 }} className="flex flex-col gap-2"><SkeletonLine w="50%" h={14} /><SkeletonLine w="30%" h={11} /></div>
+          </div>
+          <SkeletonLine w="80%" h={40} r={12} />
+        </div>
+        <div className="card mb-4 flex flex-col gap-3"><SkeletonLine w="40%" h={14} /><SkeletonLine w="70%" h={12} /><SkeletonLine w="60%" h={12} /></div>
+        <div className="card flex justify-between items-center"><SkeletonLine w="30%" h={24} /><SkeletonLine w="24%" h={24} r={12} /></div>
       </div>
     );
   }
@@ -44,7 +52,7 @@ const TripDetails = () => {
   };
 
   return (
-    <div className="screen has-nav fade-up">
+    <div className="screen fade-up">
       <Header title="Trip details" />
 
       <div className="card mb-4">

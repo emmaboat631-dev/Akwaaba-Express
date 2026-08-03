@@ -19,4 +19,36 @@ export const TripCardSkeleton = () => (
   </div>
 );
 
+// A card with a leading avatar/mark, two text lines and a trailing value —
+// matches list rows (live buses, bookings, manifest).
+export const ListRowSkeleton = () => (
+  <div className="card flex items-center gap-3">
+    <SkeletonLine w={46} h={46} r={14} />
+    <div style={{ flex: 1 }} className="flex flex-col gap-2">
+      <SkeletonLine w="55%" h={14} />
+      <SkeletonLine w="35%" h={11} />
+    </div>
+    <SkeletonLine w={48} h={16} />
+  </div>
+);
+
+// Render N of a skeleton, keyed — for lists.
+export const SkeletonList = ({ count = 4, Item = ListRowSkeleton }) => (
+  <div className="flex flex-col gap-3">
+    {Array.from({ length: count }).map((_, i) => <Item key={i} />)}
+  </div>
+);
+
+// A row of stat tiles (driver earnings / dashboard overview).
+export const StatTilesSkeleton = ({ count = 3 }) => (
+  <div className="flex gap-3">
+    {Array.from({ length: count }).map((_, i) => (
+      <div key={i} className="card flex-1 flex flex-col items-center gap-2" style={{ padding: 14 }}>
+        <SkeletonLine w="60%" h={18} />
+        <SkeletonLine w="40%" h={10} />
+      </div>
+    ))}
+  </div>
+);
+
 export default SkeletonLine;

@@ -13,6 +13,7 @@ import { useTheme } from '../context/ThemeContext';
 
 import Avatar from '../components/Avatar';
 import Toggle from '../components/Toggle';
+import PhoneInput from '../components/PhoneInput';
 import { PAYMENT_PROVIDERS } from '../data/paymentProviders';
 
 const PLACE_ICONS = { home: Home, work: Briefcase, other: MapPin };
@@ -91,7 +92,7 @@ const Profile = () => {
               <div className="field-label">Full name</div>
               <div className="field mb-2"><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Name" /></div>
               <div className="field-label">Phone</div>
-              <div className="field"><input type="tel" inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="024 000 0000" /></div>
+              <div className="field"><PhoneInput value={form.phone} onChange={(digits) => setForm((f) => ({ ...f, phone: digits }))} /></div>
             </div>
           ) : (
             <div style={{ flex: 1 }}>
@@ -186,7 +187,7 @@ const Profile = () => {
             ) : (
               <>
                 <div className="field-label">Mobile money number</div>
-                <div className="field mb-3"><Smartphone size={18} className="muted" /><input type="tel" inputMode="tel" placeholder="024 000 0000" value={payForm.number} onChange={(e) => setPayForm({ ...payForm, number: e.target.value })} /></div>
+                <div className="field mb-3"><Smartphone size={18} className="muted" /><PhoneInput value={payForm.number} onChange={(digits) => setPayForm((f) => ({ ...f, number: digits }))} /></div>
               </>
             )}
 

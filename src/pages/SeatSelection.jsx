@@ -21,7 +21,7 @@ const SeatSelection = () => {
 
   if (!trip) {
     return (
-      <div className="screen has-nav">
+      <div className="screen">
         <Header title="Select seats" />
         <EmptyState icon={Bus} title="No trip selected" message="Pick a trip first." action={<button className="btn btn-primary btn-sm" onClick={() => navigate('/')}>Find a bus</button>} />
       </div>
@@ -47,7 +47,7 @@ const SeatSelection = () => {
   const total = selected.length * trip.price;
 
   return (
-    <div className="screen has-nav fade-up">
+    <div className="screen fade-up">
       <Header title="Choose your seats" subtitle={`${busType.name} · ${pax} passenger${pax === 1 ? '' : 's'}`} />
 
       <SeatMap
