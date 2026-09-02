@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { storage, KEYS } from '../services/storage';
 import { supabase } from '../lib/supabase';
 import { todayISO } from '../data/driverTrips';
+import { useAuth } from './AuthContext';
 
 // Driver-side persisted state: today's assigned-trip progress, completed
 // trips + earnings ledger, and the overview stats (km, acceptance rate,
@@ -28,11 +29,33 @@ const EMPTY = {
 };
 
 export const DriverProvider = ({ children }) => {
+  const { user } = useAuth();
   const [state, setState] = useState(() => storage.get(KEYS.driver, EMPTY));
 
   useEffect(() => {
     storage.set(KEYS.driver, state);
   }, [state]);
+
+  const fetchCompletions = async () => {
+    if (!user?.id || user.role !== 'driver') return;
+    const { data } = await supabase
+      .from('trip_completions')
+      .select('*')
+      .eq('driver_id', user.id)
+      .order('completed_at', { ascending: false })
+      .limit(200);
+    if (!data || data.length === 0) return;
+    const entries = data.map((r) => ({
+      id: r.trip_id || r.id,
+      type: r.type,
+      amount: Number(r.amount),
+      distanceKm: Number(r.distance_km),
+      date: r.completed_at,
+    }));
+    setState((s) => ({ ...s, completedTrips: entries, earningsLedger: entries }));
+  };
+
+  useEffect(() => { fetchCompletions(); }, [user?.id]);
 
   const value = useMemo(
     () => ({
@@ -74,30 +97,47 @@ export const DriverProvider = ({ children }) => {
         }
       },
 
-      completeTrip: (trip) =>
-        setState((s) => {
-          const entry = { id: trip.id, type: 'scheduled', amount: trip.earningsAmount, distanceKm: trip.distanceKm, date: new Date().toISOString() };
-          return {
-            ...s,
-            assignedTripId: trip.id,
-            assignedTripStatus: 'completed',
-            completedTrips: [entry, ...s.completedTrips],
-            earningsLedger: [entry, ...s.earningsLedger],
-            totalKm: s.totalKm + (trip.distanceKm || 0),
-          };
-        }),
+      completeTrip: (trip) => {
+        const entry = { id: trip.id, type: 'scheduled', amount: trip.earningsAmount, distanceKm: trip.distanceKm, date: new Date().toISOString() };
+        setState((s) => ({
+          ...s,
+          assignedTripId: trip.id,
+          assignedTripStatus: 'completed',
+          completedTrips: [entry, ...s.completedTrips],
+          earningsLedger: [entry, ...s.earningsLedger],
+          totalKm: s.totalKm + (trip.distanceKm || 0),
+        }));
+        if (user?.id) {
+          supabase.from('trip_completions').insert([{
+            driver_id: user.id,
+            trip_id: trip.id.startsWith('assign__') ? null : trip.id,
+            type: 'scheduled',
+            amount: trip.earningsAmount || 0,
+            distance_km: trip.distanceKm || 0,
+          }]).then();
+        }
+      },
 
-      completeHail: (request) =>
-        setState((s) => {
-          const entry = { id: request.id, type: 'live', amount: request.fareEstimate, distanceKm: request.distanceKm, date: new Date().toISOString() };
-          return {
-            ...s,
-            completedTrips: [entry, ...s.completedTrips],
-            earningsLedger: [entry, ...s.earningsLedger],
-            totalKm: s.totalKm + (request.distanceKm || 0),
-          };
-        }),
+      completeHail: (request) => {
+        const entry = { id: request.id, type: 'live', amount: request.fareEstimate, distanceKm: request.distanceKm, date: new Date().toISOString() };
+        setState((s) => ({
+          ...s,
+          completedTrips: [entry, ...s.completedTrips],
+          earningsLedger: [entry, ...s.earningsLedger],
+          totalKm: s.totalKm + (request.distanceKm || 0),
+        }));
+        if (user?.id) {
+          supabase.from('trip_completions').insert([{
+            driver_id: user.id,
+            trip_id: null,
+            type: 'live',
+            amount: request.fareEstimate || 0,
+            distance_km: request.distanceKm || 0,
+          }]).then();
+        }
+      },
 
+      refetchCompletions: fetchCompletions,
       recordAccept: () => setState((s) => ({ ...s, acceptedCount: s.acceptedCount + 1 })),
       recordDecline: () => setState((s) => ({ ...s, declinedCount: s.declinedCount + 1 })),
 

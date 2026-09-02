@@ -37,7 +37,10 @@ const DriverTripHistory = () => {
   }, [driver.completedTrips]);
 
   const list = tab === 'today' ? today : all;
-  const refresh = () => new Promise((r) => setTimeout(() => { toast('Up to date', 'info'); r(); }, 900));
+  const refresh = async () => {
+    await driver.refetchCompletions();
+    toast('Up to date', 'info');
+  };
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>

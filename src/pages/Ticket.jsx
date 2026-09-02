@@ -344,8 +344,39 @@ const Ticket = () => {
             </div>
 
             <div className="flex w-full mt-4 gap-3">
-              <button className="btn btn-ghost" onClick={() => toast('Ticket saved to device', 'success')}><Download size={18} /> Save</button>
-              <button className="btn btn-ghost" onClick={() => toast('Share link copied', 'success')}><Share2 size={18} /> Share</button>
+              <button className="btn btn-ghost" onClick={() => {
+                const svg = sheetRef.current?.querySelector('svg');
+                if (!svg) { toast('Could not capture QR code', 'error'); return; }
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const canvas = document.createElement('canvas');
+                canvas.width = 512; canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.onload = () => {
+                  ctx.fillStyle = '#fff';
+                  ctx.fillRect(0, 0, 512, 512);
+                  ctx.drawImage(img, 32, 32, 448, 448);
+                  ctx.font = 'bold 18px system-ui';
+                  ctx.fillStyle = '#0B2E1C';
+                  ctx.textAlign = 'center';
+                  ctx.fillText(`${fromCode} → ${toCode}  •  ${dateLabel}`, 256, 500);
+                  const a = document.createElement('a');
+                  a.download = `akwaaba-ticket-${booking.id}.png`;
+                  a.href = canvas.toDataURL('image/png');
+                  a.click();
+                  toast('Ticket saved', 'success');
+                };
+                img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+              }}><Download size={18} /> Save</button>
+              <button className="btn btn-ghost" onClick={async () => {
+                const text = `Akwaaba Express Ticket\n${fromCityLabel} → ${toCityLabel}\n${dateLabel} • ${departLabel}\nPassenger: ${passengerName}\nSeat: ${seatsLabel || 'GA'}\nRef: ${booking.id}`;
+                if (navigator.share) {
+                  try { await navigator.share({ title: 'Akwaaba Ticket', text }); } catch {}
+                } else {
+                  await navigator.clipboard.writeText(text);
+                  toast('Ticket details copied', 'success');
+                }
+              }}><Share2 size={18} /> Share</button>
             </div>
 
             <button
