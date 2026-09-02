@@ -28,11 +28,3 @@ export const routeLengthKm = (points) => {
   return total;
 };
 
-// Bearing in degrees from point A to B (for rotating the bus icon).
-export const bearing = ([lat1, lng1], [lat2, lng2]) => {
-  const y = Math.sin(toRad(lng2 - lng1)) * Math.cos(toRad(lat2));
-  const x =
-    Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
-    Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lng2 - lng1));
-  return (Math.atan2(y, x) * 180) / Math.PI;
-};

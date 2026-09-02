@@ -39,16 +39,3 @@ export const SkeletonList = ({ count = 4, Item = ListRowSkeleton }) => (
   </div>
 );
 
-// A row of stat tiles (driver earnings / dashboard overview).
-export const StatTilesSkeleton = ({ count = 3 }) => (
-  <div className="flex gap-3">
-    {Array.from({ length: count }).map((_, i) => (
-      <div key={i} className="card flex-1 flex flex-col items-center gap-2" style={{ padding: 14 }}>
-        <SkeletonLine w="60%" h={18} />
-        <SkeletonLine w="40%" h={10} />
-      </div>
-    ))}
-  </div>
-);
-
-export default SkeletonLine;

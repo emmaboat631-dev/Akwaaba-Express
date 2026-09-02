@@ -18,18 +18,9 @@ export const storage = {
       /* ignore quota / private-mode errors */
     }
   },
-  remove(key) {
-    try {
-      localStorage.removeItem(NS + key);
-    } catch {
-      /* noop */
-    }
-  },
 };
 
 export const KEYS = {
-  user: 'user',
-  trips: 'trips',
   recentSearches: 'recentSearches',
   draft: 'draft',
   theme: 'theme',

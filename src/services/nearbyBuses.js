@@ -11,7 +11,7 @@ const DESTINATIONS = ['Circle', 'Kaneshie', 'Madina', 'Tema Station', 'Achimota'
 
 const keyOf = (center) => center.map((n) => n.toFixed(2)).join(',');
 
-export const generateNearbyBuses = (center) => {
+const generateNearbyBuses = (center) => {
   const [lat, lng] = center;
   const rng = mulberry32(hashString(keyOf(center)));
   const count = intRange(rng, 6, 8);
@@ -64,4 +64,3 @@ export const getNearbyBuses = (center) => {
   return cache;
 };
 
-export const getNearbyBus = (center, id) => getNearbyBuses(center).find((b) => b.id === id);

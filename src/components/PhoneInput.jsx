@@ -15,12 +15,6 @@ const toDisplay = (value) => {
   return raw ? `${PREFIX} ${raw.slice(0, MAX_DIGITS)}` : PREFIX + ' ';
 };
 
-// Display value → stored value (digits only, no prefix).
-const toStored = (display) => {
-  const after = display.slice((PREFIX + ' ').length);
-  return stripNonDigits(after).slice(0, MAX_DIGITS);
-};
-
 const PhoneInput = ({ value, onChange, placeholder, ...rest }) => {
   const ref = useRef(null);
 

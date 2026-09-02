@@ -28,7 +28,7 @@ const BUS_TYPES_FALLBACK = [
 export let OPERATORS = [...OPERATORS_FALLBACK];
 export let BUS_TYPES = [...BUS_TYPES_FALLBACK];
 
-const fetchPromise = Promise.all([
+Promise.all([
   supabase.from('operators').select('*').order('name'),
   supabase.from('bus_types').select('*').order('name'),
 ]).then(([opRes, btRes]) => {
@@ -41,8 +41,6 @@ const fetchPromise = Promise.all([
     }));
   }
 }).catch(() => {});
-
-export const operatorsReady = fetchPromise;
 
 export const operatorById = (id) => OPERATORS.find((o) => o.id === id);
 export const busTypeById = (id) => BUS_TYPES.find((b) => b.id === id);
