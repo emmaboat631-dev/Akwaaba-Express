@@ -9,6 +9,7 @@ import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
 import { relay } from '../services/relay';
 import { initPaystack, PAYSTACK_CHANNELS } from '../services/paystack';
+import { requestPermission, notifyBookingConfirmed } from '../services/notifications';
 import { operatorById } from '../data/operators';
 import { cityById } from '../data/cities';
 import { formatCedi } from '../utils/format';
@@ -69,6 +70,7 @@ const Payment = () => {
       relay.send('booking:new', { booking });
       reset();
       toast('Payment successful', 'success');
+      notifyBookingConfirmed(routeLabel, total);
       navigate(`/ticket/${booking.id}`, { replace: true });
     } catch {
       toast('Booking failed after payment — contact support', 'error');

@@ -12,6 +12,7 @@ import BottomNav from './components/BottomNav';
 import DriverBottomNav from './components/driver/DriverBottomNav';
 import Splash from './components/Splash';
 import RelayNotifications from './components/RelayNotifications';
+import { requestPermission } from './services/notifications';
 
 import Welcome from './pages/Welcome';
 import SignIn from './pages/SignIn';
@@ -71,6 +72,11 @@ const Shell = () => {
   const location = useLocation();
   const showNav = NAV_ROUTES.includes(location.pathname);
   const showDriverNav = DRIVER_NAV_ROUTES.includes(location.pathname);
+
+  const { isAuthed } = useAuth();
+  useEffect(() => {
+    if (isAuthed) requestPermission();
+  }, [isAuthed]);
 
   // Brand splash on app open — animated sequence in Splash.jsx runs ~3.55s
   // (text cascade → morph → bus drive-off), then AnimatePresence plays the

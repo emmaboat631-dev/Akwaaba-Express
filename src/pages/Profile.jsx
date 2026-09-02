@@ -16,6 +16,7 @@ import Toggle from '../components/Toggle';
 import PhoneInput from '../components/PhoneInput';
 import { PAYMENT_PROVIDERS } from '../data/paymentProviders';
 import { isValidGhanaCard } from '../utils/format';
+import { isEnabled as notifEnabled, setEnabled as setNotifEnabled, requestPermission } from '../services/notifications';
 
 const PLACE_ICONS = { home: Home, work: Briefcase, other: MapPin };
 
@@ -30,7 +31,7 @@ const Profile = () => {
   const [form, setForm] = useState({ name: user?.name || '', phone: user?.phone || '', ghanaCard: '' });
   const [place, setPlace] = useState(null); // { label, address } | null
   const [payForm, setPayForm] = useState(null); // { type, number, expiry } | null
-  const [settings, setSettings] = useState({ notify: true, email: false });
+  const [settings, setSettings] = useState({ notify: notifEnabled(), email: false });
 
   if (!user) return null;
 
@@ -210,7 +211,16 @@ const Profile = () => {
           { key: 'email', label: 'Email updates', icon: Bell },
         ].map(({ key, label, icon: Icon }) => {
           const on = key === 'dark' ? isDark : settings[key];
-          const handle = key === 'dark' ? toggleTheme : () => setSettings((s) => ({ ...s, [key]: !s[key] }));
+          const handle = key === 'dark' ? toggleTheme : key === 'notify' ? async () => {
+            if (!settings.notify) {
+              const granted = await requestPermission();
+              if (!granted) { toast('Notifications blocked — enable in browser settings', 'error'); return; }
+            }
+            const next = !settings.notify;
+            setNotifEnabled(next);
+            setSettings((s) => ({ ...s, notify: next }));
+            toast(next ? 'Notifications enabled' : 'Notifications disabled', 'info');
+          } : () => setSettings((s) => ({ ...s, [key]: !s[key] }));
           return (
             <div key={key} className="flex items-center gap-3" style={{ padding: 12 }}>
               <div style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--surface-2)', color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={17} /></div>
