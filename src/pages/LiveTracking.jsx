@@ -9,6 +9,7 @@ import { useBooking } from '../context/BookingContext';
 import { operatorById, busTypeById } from '../data/operators';
 import { formatCedi } from '../utils/format';
 import { lerpPoint } from '../utils/geo';
+import { getRoute } from '../services/routing';
 
 import BusMap from '../components/BusMap';
 import BottomSheet from '../components/BottomSheet';
@@ -52,6 +53,13 @@ const LiveTracking = () => {
     [bus, position],
   );
 
+  const [roadRoute, setRoadRoute] = useState(null);
+  useEffect(() => {
+    if (bus?.origin && position) {
+      getRoute(bus.origin, position).then(setRoadRoute);
+    }
+  }, [bus?.origin?.[0], position?.[0]]);
+
   if (!bus) {
     return (
       <div className="screen fade-up">
@@ -74,7 +82,7 @@ const LiveTracking = () => {
         <BusMap
           buses={[{ ...bus, position: busPos }]}
           selectedBusId={bus.id}
-          routeLine={bounds}
+          routeLine={roadRoute || bounds}
           fitBounds={bounds}
           userPosition={position}
         />
