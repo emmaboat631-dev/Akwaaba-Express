@@ -8,6 +8,7 @@ import { useTrips } from '../context/TripsContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
 import { relay } from '../services/relay';
+import { initPaystack, PAYSTACK_CHANNELS } from '../services/paystack';
 import { operatorById } from '../data/operators';
 import { cityById } from '../data/cities';
 import { formatCedi } from '../utils/format';
@@ -17,10 +18,10 @@ import EmptyState from '../components/EmptyState';
 import OperatorMark from '../components/OperatorMark';
 
 const NETWORKS = [
-  { type: 'momo', label: 'MTN MoMo', detail: 'Mobile money' },
-  { type: 'telecel', label: 'Telecel Cash', detail: 'Mobile money' },
-  { type: 'airteltigo', label: 'AirtelTigo Money', detail: 'Mobile money' },
-  { type: 'card', label: 'Visa / Mastercard', detail: 'Debit or credit card' },
+  { type: 'card', label: 'Paystack (Card)', detail: 'Visa / Mastercard via Paystack', enabled: true },
+  { type: 'momo', label: 'MTN MoMo', detail: 'Available soon', enabled: false },
+  { type: 'telecel', label: 'Telecel Cash', detail: 'Available soon', enabled: false },
+  { type: 'airteltigo', label: 'AirtelTigo Money', detail: 'Available soon', enabled: false },
 ];
 
 const BOOKING_FEE = 2;
@@ -58,24 +59,48 @@ const Payment = () => {
     );
   }
 
-  const pay = async () => {
-    const method = methods.find((m) => m.id === selected);
-    if (!method) { toast('Choose a payment method', 'error'); return; }
-    setPaying(true);
+  const finalize = async (reference, payment) => {
     try {
-      const payment = { type: method.type, label: method.label };
-      await api.pay({ amount: total, method: payment });
-      setPayment(payment);
-      const booking = await api.createBooking({ ...draft, paymentMethod: payment, breakdown: { total, fee: BOOKING_FEE, unit, qty } }, user?.id);
+      const booking = await api.createBooking(
+        { ...draft, paymentMethod: { ...payment, ref: reference }, breakdown: { total, fee: BOOKING_FEE, unit, qty } },
+        user?.id,
+      );
       addBooking(booking);
-      // Share to the LAN relay so a driver on another device can verify this
-      // ticket by scanning its QR (no backend to look it up otherwise).
       relay.send('booking:new', { booking });
       reset();
       toast('Payment successful', 'success');
       navigate(`/ticket/${booking.id}`, { replace: true });
     } catch {
-      toast('Payment failed, try again', 'error');
+      toast('Booking failed after payment — contact support', 'error');
+      setPaying(false);
+    }
+  };
+
+  const pay = () => {
+    const method = methods.find((m) => m.id === selected);
+    if (!method) { toast('Choose a payment method', 'error'); return; }
+    if (!user?.email) { toast('No email on your account — sign in again', 'error'); return; }
+    setPaying(true);
+
+    const payment = { type: method.type, label: method.label };
+    const channels = PAYSTACK_CHANNELS[method.type] || ['card'];
+
+    try {
+      initPaystack({
+        email: user.email,
+        amount: total,
+        channels,
+        onSuccess: (reference) => {
+          setPayment(payment);
+          finalize(reference, payment);
+        },
+        onClose: () => {
+          toast('Payment cancelled', 'info');
+          setPaying(false);
+        },
+      });
+    } catch {
+      toast('Could not start payment — check Paystack key', 'error');
       setPaying(false);
     }
   };
@@ -109,8 +134,14 @@ const Payment = () => {
         {methods.map((m) => {
           const Icon = m.type === 'card' ? CreditCard : Smartphone;
           const active = selected === m.id;
+          const disabled = m.enabled === false;
           return (
-            <button key={m.id} className={`card flex items-center justify-between${active ? ' card-selected' : ''}`} style={{ padding: '14px 16px' }} onClick={() => setSelected(m.id)}>
+            <button
+              key={m.id}
+              className={`card flex items-center justify-between${active ? ' card-selected' : ''}`}
+              style={{ padding: '14px 16px', opacity: disabled ? 0.45 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
+              onClick={() => { if (!disabled) setSelected(m.id); else toast('This method is coming soon', 'info'); }}
+            >
               <div className="flex items-center gap-3">
                 <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--surface-2)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={19} /></div>
                 <div style={{ textAlign: 'left' }}>
@@ -118,15 +149,17 @@ const Payment = () => {
                   <div className="t-xs muted">{m.detail}</div>
                 </div>
               </div>
-              <div style={{ width: 22, height: 22, borderRadius: '50%', border: active ? '6px solid var(--primary)' : '2px solid var(--line)', transition: 'all .15s' }}>
-                {active && <Check size={0} />}
-              </div>
+              {disabled ? (
+                <span className="t-xs muted" style={{ fontStyle: 'italic' }}>Soon</span>
+              ) : (
+                <div style={{ width: 22, height: 22, borderRadius: '50%', border: active ? '6px solid var(--primary)' : '2px solid var(--line)', transition: 'all .15s' }} />
+              )}
             </button>
           );
         })}
       </div>
 
-      <div className="flex items-center justify-center gap-2 t-xs muted mt-4"><ShieldCheck size={14} /> Secured prototype checkout</div>
+      <div className="flex items-center justify-center gap-2 t-xs muted mt-4"><ShieldCheck size={14} /> Secured by Paystack</div>
 
       <div className="mt-auto" style={{ paddingTop: 12 }}>
         <button className="btn btn-primary" onClick={pay} disabled={paying}>
