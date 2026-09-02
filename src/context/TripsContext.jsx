@@ -2,13 +2,14 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { mapBooking } from '../services/api';
+import { storage, KEYS } from '../services/storage';
 
 const TripsContext = createContext(null);
 export const useTrips = () => useContext(TripsContext);
 
 export const TripsProvider = ({ children }) => {
   const { user, isAuthed } = useAuth();
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState(() => storage.get(KEYS.bookings, []));
   const [loading, setLoading] = useState(true);
 
   const fetchBookings = async () => {
@@ -38,7 +39,11 @@ export const TripsProvider = ({ children }) => {
       console.error("Error fetching bookings:", error);
     }
 
-    setBookings((data || []).map(mapBooking));
+    const mapped = (data || []).map(mapBooking);
+    if (data && data.length > 0) {
+      storage.set(KEYS.bookings, mapped);
+    }
+    setBookings(mapped.length > 0 ? mapped : bookings);
     setLoading(false);
   };
 
@@ -54,7 +59,11 @@ export const TripsProvider = ({ children }) => {
       loading,
       refetch: fetchBookings,
       getBooking: (id) => bookings.find((b) => b.id === id),
-      addBooking: (booking) => setBookings((list) => [booking, ...list]),
+      addBooking: (booking) => setBookings((list) => {
+        const next = [booking, ...list];
+        storage.set(KEYS.bookings, next);
+        return next;
+      }),
       cancelBooking: async (id) => {
         const { error } = await supabase
           .from('bookings')

@@ -25,4 +25,5 @@ export const KEYS = {
   draft: 'draft',
   theme: 'theme',
   driver: 'driver',
+  bookings: 'bookings',
 };
