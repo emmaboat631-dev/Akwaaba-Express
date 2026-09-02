@@ -12,6 +12,7 @@ import { cityById } from '../../data/cities';
 import { formatCedi, minutesToClock } from '../../utils/format';
 import { relay } from '../../services/relay';
 import { supabase } from '../../lib/supabase';
+import { getRoute } from '../../services/routing';
 
 import BusMap from '../../components/BusMap';
 import BottomSheet from '../../components/BottomSheet';
@@ -64,9 +65,16 @@ const DriverActiveTrip = () => {
   const from = trip ? cityById(trip.fromId) : null;
   const to = trip ? cityById(trip.toId) : null;
 
-  const routeLine = isHail
-    ? (position && request.pickup ? [position, request.pickup] : null)
-    : (from && to ? [[from.lat, from.lng], [to.lat, to.lng]] : null);
+  const [routeLine, setRouteLine] = useState(null);
+  useEffect(() => {
+    if (isHail) {
+      if (position && request.pickup) {
+        getRoute(position, request.pickup).then(setRouteLine);
+      }
+    } else if (from && to) {
+      getRoute([from.lat, from.lng], [to.lat, to.lng]).then(setRouteLine);
+    }
+  }, [isHail, from?.lat, to?.lat, position?.[0], request?.pickup?.[0]]);
 
   const complete = async () => {
     if (isHail) {
