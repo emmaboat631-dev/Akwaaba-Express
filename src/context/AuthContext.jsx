@@ -108,10 +108,21 @@ export const AuthProvider = ({ children }) => {
         if (!active) return;
         if (profileRes.status === 'fulfilled' && profileRes.value.data) {
           setProfile(profileFromRow(profileRes.value.data));
-        } else if (profileRes.status === 'fulfilled' && profileRes.value.error) {
-          console.warn('profile fetch:', profileRes.value.error.message);
-        } else if (profileRes.status === 'rejected') {
-          console.warn('profile fetch rejected:', profileRes.reason);
+        } else if (profileRes.status === 'fulfilled' && !profileRes.value.data) {
+          const meta = session.user.user_metadata || {};
+          const { data: newProfile } = await supabase
+            .from('profiles')
+            .upsert([{
+              id: session.user.id,
+              role: meta.role || 'passenger',
+              name: meta.full_name || meta.name || '',
+              email: session.user.email || '',
+              phone: meta.phone || '',
+              is_guest: false,
+            }], { onConflict: 'id' })
+            .select()
+            .single();
+          if (newProfile && active) setProfile(profileFromRow(newProfile));
         }
         if (placesRes.status === 'fulfilled' && placesRes.value.data) setPlaces(placesRes.value.data);
         if (methodsRes.status === 'fulfilled' && methodsRes.value.data) setMethods(methodsRes.value.data);

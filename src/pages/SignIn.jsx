@@ -138,10 +138,24 @@ const SignIn = () => {
       </div>
 
       <div className="flex gap-3" style={{ marginBottom: 16 }}>
-        <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => toast('OAuth not set up yet', 'info')}>
+        <button className="btn btn-outline" style={{ flex: 1 }} disabled={isSubmitting} onClick={async () => {
+          setIsSubmitting(true);
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: window.location.origin },
+          });
+          if (error) { toast(error.message, 'error'); setIsSubmitting(false); }
+        }}>
           <GoogleIcon /> Google
         </button>
-        <button className="btn btn-dark" style={{ flex: 1 }} onClick={() => toast('OAuth not set up yet', 'info')}>
+        <button className="btn btn-dark" style={{ flex: 1 }} disabled={isSubmitting} onClick={async () => {
+          setIsSubmitting(true);
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'apple',
+            options: { redirectTo: window.location.origin },
+          });
+          if (error) { toast(error.message, 'error'); setIsSubmitting(false); }
+        }}>
           <AppleIcon /> Apple
         </button>
       </div>
