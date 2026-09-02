@@ -22,6 +22,11 @@ export const minutesToClock = (mins) => {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 };
 
+export const isValidGhanaCard = (value) => {
+  if (!value) return true;
+  return /^GHA-\d{9}-\d$/i.test(value.trim());
+};
+
 export const initialsOf = (name = '') =>
   name
     .trim()

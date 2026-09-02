@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { storage, KEYS } from '../services/storage';
+import { supabase } from '../lib/supabase';
 import { todayISO } from '../data/driverTrips';
 
 // Driver-side persisted state: today's assigned-trip progress, completed
@@ -66,7 +67,12 @@ export const DriverProvider = ({ children }) => {
           return { ...s, lastActiveDateISO: today, onlineSecondsToday: 0, dailyHistory };
         }),
 
-      startTrip: (tripId) => setState((s) => ({ ...s, assignedTripId: tripId, assignedTripStatus: 'in-progress' })),
+      startTrip: (tripId) => {
+        setState((s) => ({ ...s, assignedTripId: tripId, assignedTripStatus: 'in-progress' }));
+        if (!tripId.startsWith('assign__')) {
+          supabase.from('trips').update({ status: 'in_progress' }).eq('id', tripId).then();
+        }
+      },
 
       completeTrip: (trip) =>
         setState((s) => {

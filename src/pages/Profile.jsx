@@ -15,6 +15,7 @@ import Avatar from '../components/Avatar';
 import Toggle from '../components/Toggle';
 import PhoneInput from '../components/PhoneInput';
 import { PAYMENT_PROVIDERS } from '../data/paymentProviders';
+import { isValidGhanaCard } from '../utils/format';
 
 const PLACE_ICONS = { home: Home, work: Briefcase, other: MapPin };
 
@@ -35,6 +36,7 @@ const Profile = () => {
 
   const saveProfile = () => {
     if (!form.name.trim()) { toast('Name cannot be empty', 'error'); return; }
+    if (form.ghanaCard && !isValidGhanaCard(form.ghanaCard)) { toast('Ghana Card must be GHA-XXXXXXXXX-X', 'error'); return; }
     updateUser(form);
     setEditing(false);
     toast('Profile updated', 'success');

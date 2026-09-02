@@ -11,6 +11,7 @@ import { operatorById, busTypeById } from '../../data/operators';
 import { cityById } from '../../data/cities';
 import { formatCedi, minutesToClock } from '../../utils/format';
 import { relay } from '../../services/relay';
+import { supabase } from '../../lib/supabase';
 
 import BusMap from '../../components/BusMap';
 import BottomSheet from '../../components/BottomSheet';
@@ -67,13 +68,16 @@ const DriverActiveTrip = () => {
     ? (position && request.pickup ? [position, request.pickup] : null)
     : (from && to ? [[from.lat, from.lng], [to.lat, to.lng]] : null);
 
-  const complete = () => {
+  const complete = async () => {
     if (isHail) {
       driver.completeHail(request);
       hail.completeActive();
       toast('Ride complete', 'success');
     } else {
       driver.completeTrip(trip);
+      if (!trip.id.startsWith('assign__')) {
+        await supabase.from('trips').update({ status: 'completed' }).eq('id', trip.id);
+      }
       toast('Trip complete', 'success');
     }
     navigate('/driver', { replace: true });

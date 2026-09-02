@@ -29,6 +29,7 @@ const profileFromRow = (row) => row && ({
   busTypeId: row.bus_type_id,
   vehicleModel: row.vehicle_model || '',
   vehicleColor: row.vehicle_color || '',
+  payoutMethod: row.payout_method || null,
 });
 
 // Fields a client is allowed to patch; everything else (id, role, email,
@@ -229,7 +230,7 @@ export const AuthProvider = ({ children }) => {
         if (!session?.user) return;
         const { data, error } = await supabase
           .from('profiles')
-          .update({ verification_status: 'verified' })
+          .update({ verification_status: 'pending' })
           .eq('id', session.user.id)
           .select()
           .single();
@@ -237,9 +238,17 @@ export const AuthProvider = ({ children }) => {
         if (data) setProfile(profileFromRow(data));
       },
 
-      // Payout method not persisted server-side yet — kept in-memory so
-      // driver profile UI has a place to store it until we add a column.
-      setPayoutMethod: () => {},
+      setPayoutMethod: async (method) => {
+        if (!session?.user) return;
+        const { data, error } = await supabase
+          .from('profiles')
+          .update({ payout_method: method })
+          .eq('id', session.user.id)
+          .select()
+          .single();
+        if (error) { console.warn('setPayoutMethod:', error.message); return; }
+        if (data) setProfile(profileFromRow(data));
+      },
     };
   }, [profile, session, places, methods, loading]);
 

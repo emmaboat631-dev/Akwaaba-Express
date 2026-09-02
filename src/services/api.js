@@ -64,6 +64,7 @@ export const api = {
       .eq('from_id', fromId)
       .eq('to_id', toId)
       .eq('travel_date', dateISO)
+      .eq('status', 'active')
       .order('depart_mins', { ascending: true });
 
     if (error) {
@@ -154,32 +155,27 @@ export const api = {
   async createBooking(draft, userId) {
     if (draft?.type === 'live' && draft?.trip?.id) {
       liveTracking.bookSeat(draft.trip.id);
-      const id = uid('AE').toUpperCase();
-      return {
-        ...draft,
-        id,
-        status: 'confirmed',
-        qrValue: `https://akwaaba-express.app/t/${id}`,
-        createdAt: new Date().toISOString(),
-      };
     }
 
     if (!userId) {
-      throw new Error("Must be logged in to book a scheduled trip");
+      throw new Error("Must be logged in to book");
     }
+
+    const isLive = draft.type === 'live';
 
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .insert([{
         user_id: userId,
-        trip_id: draft.trip.id,
-        type: 'scheduled',
+        trip_id: isLive ? null : draft.trip.id,
+        type: isLive ? 'live' : 'scheduled',
         status: 'confirmed',
-        seats: draft.seats,
+        seats: draft.seats || [],
         amount: draft.breakdown.total,
         fee: draft.breakdown.fee,
         payment_label: draft.paymentMethod?.label,
-        payment_ref: uid('TXN').toUpperCase()
+        payment_ref: uid('TXN').toUpperCase(),
+        live_route: isLive ? (draft.trip.routeName || draft.trip.destinationName || null) : null,
       }])
       .select()
       .single();

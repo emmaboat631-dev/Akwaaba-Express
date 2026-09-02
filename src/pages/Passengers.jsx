@@ -13,6 +13,7 @@ import Header from '../components/Header';
 import EmptyState from '../components/EmptyState';
 import Avatar from '../components/Avatar';
 import PhoneInput, { isValidGhPhone } from '../components/PhoneInput';
+import { isValidGhanaCard } from '../utils/format';
 
 const blank = { name: '', phone: '', idNo: '' };
 
@@ -90,7 +91,7 @@ const Passengers = () => {
       if (m.type === 'hail:accept') { setHailing(null); navigate('/payment'); }
       if (m.type === 'hail:decline') { setHailing(null); toast('Driver is unavailable — try another bus.', 'error'); }
     });
-    const timer = setTimeout(() => { setHailing(null); toast('Driver didn’t respond — try again.', 'error'); }, 18000);
+    const timer = setTimeout(() => { setHailing(null); toast("Driver didn't respond — try again.", 'error'); }, 18000);
     return () => { off(); clearTimeout(timer); };
   }, [hailing, navigate, toast]);
 
@@ -105,8 +106,18 @@ const Passengers = () => {
 
   const proceed = () => {
     if (!valid) {
-      toast(isGuest ? 'Enter your name and phone to continue' : 'Add each passenger’s name', 'error');
+      toast(isGuest ? 'Enter your name and phone to continue' : "Add each passenger's name", 'error');
       setEditingBooker(true);
+      return;
+    }
+    if (booker.idNo && !isValidGhanaCard(booker.idNo)) {
+      toast('Ghana Card must be GHA-XXXXXXXXX-X', 'error');
+      setEditingBooker(true);
+      return;
+    }
+    const badExtra = extras.find((p) => p.idNo && !isValidGhanaCard(p.idNo));
+    if (badExtra) {
+      toast('Ghana Card must be GHA-XXXXXXXXX-X', 'error');
       return;
     }
     const passengers = [booker, ...extras];
