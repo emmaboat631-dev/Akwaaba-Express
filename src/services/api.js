@@ -4,9 +4,7 @@ import { uid } from '../utils/random';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Maps a raw Supabase trip row (snake_case) to the camelCase shape the UI
-// expects. Exported so TripsContext can reuse it for booking.trip.
-export const mapTrip = (row) => ({
+const mapTrip = (row) => ({
   id: row.id,
   type: 'scheduled',
   fromId: row.from_id,

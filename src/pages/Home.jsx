@@ -10,7 +10,6 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { useBriefLoad } from '../hooks/useBriefLoad';
 import { storage, KEYS } from '../services/storage';
 import { cityById } from '../data/cities';
-import { operatorById } from '../data/operators';
 import { formatCedi } from '../utils/format';
 
 import CityPicker from '../components/CityPicker';

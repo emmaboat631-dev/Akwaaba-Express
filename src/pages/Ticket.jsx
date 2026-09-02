@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, useMotionValue, useTransform, useDragControls, animate } from 'framer-motion';
 import { format } from 'date-fns';
-import { ArrowLeft, Bus, Plane, Download, Share2, Ticket as TicketIcon, Check, ChevronRight, X, User, Clock, MapPin, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Bus, Download, Share2, Ticket as TicketIcon, Check, ChevronRight, X, User, ShieldAlert } from 'lucide-react';
 
 import { useTrips } from '../context/TripsContext';
 import { useToast } from '../context/ToastContext';

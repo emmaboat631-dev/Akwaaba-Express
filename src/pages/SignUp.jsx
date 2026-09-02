@@ -62,7 +62,7 @@ const SignUp = () => {
     if (!passwordMeetsRules(form.password)) { toast('Password doesn’t meet all requirements', 'error'); return; }
     if (form.password !== form.confirm) { toast('Passwords do not match', 'error'); return; }
     
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {

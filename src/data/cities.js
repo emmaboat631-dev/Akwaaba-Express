@@ -32,26 +32,15 @@ const FALLBACK = [
 
 export let CITIES = [...FALLBACK];
 
-let fetched = false;
-const fetchPromise = supabase
+supabase
   .from('cities')
   .select('*')
   .order('name')
   .then(({ data }) => {
     if (data?.length) {
       CITIES = data;
-      fetched = true;
     }
   })
   .catch(() => {});
 
-export const citiesReady = fetchPromise;
-
 export const cityById = (id) => CITIES.find((c) => c.id === id);
-
-export const POPULAR_ROUTES = [
-  { fromId: 'accra', toId: 'kumasi' },
-  { fromId: 'accra', toId: 'takoradi' },
-  { fromId: 'kumasi', toId: 'tamale' },
-  { fromId: 'accra', toId: 'capecoast' },
-];
