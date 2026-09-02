@@ -42,6 +42,12 @@ import DriverProfile from './pages/driver/DriverProfile';
 import DriverTripManager from './pages/driver/DriverTripManager';
 import ReportIncident from './pages/ReportIncident';
 
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminOverview from './pages/admin/AdminOverview';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminBookings from './pages/admin/AdminBookings';
+import AdminTrips from './pages/admin/AdminTrips';
+
 const NAV_ROUTES = ['/', '/live', '/trips', '/profile'];
 const DRIVER_NAV_ROUTES = ['/driver', '/driver/earnings', '/driver/trips', '/driver/profile'];
 
@@ -140,6 +146,14 @@ const Shell = () => {
             <Route path="/driver/setup" element={<RequireAuth role="driver"><DriverVehicleSetup /></RequireAuth>} />
             <Route path="/driver/manage-trips" element={<RequireAuth role="driver"><DriverTripManager /></RequireAuth>} />
             <Route path="/driver/profile" element={<RequireAuth role="driver"><DriverProfile /></RequireAuth>} />
+
+            {/* Admin — web-only dashboard, any authenticated user */}
+            <Route path="/admin" element={<RequireAuth><AdminLayout /></RequireAuth>}>
+              <Route index element={<AdminOverview />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="bookings" element={<AdminBookings />} />
+              <Route path="trips" element={<AdminTrips />} />
+            </Route>
 
                 <Route path="*" element={<RoleHome />} />
               </Routes>
