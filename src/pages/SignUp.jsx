@@ -7,6 +7,7 @@ import SegmentedTabs from '../components/SegmentedTabs';
 import PasswordChecklist, { passwordMeetsRules } from '../components/PasswordChecklist';
 import { supabase } from '../lib/supabase';
 import PhoneInput, { isValidGhPhone } from '../components/PhoneInput';
+import { GoogleIcon, AppleIcon } from '../components/BrandIcons';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -154,7 +155,36 @@ const SignUp = () => {
         By signing up, you agree to our <span className="semibold" style={{ color: 'var(--ink)' }}>Terms of Use</span> and <span className="semibold" style={{ color: 'var(--ink)' }}>Privacy Policy</span>.
       </p>
 
-      <button className="btn btn-primary" onClick={submit}>{copy.submit}</button>
+      <button className="btn btn-primary" onClick={submit} disabled={busy}>{copy.submit}</button>
+
+      <div className="flex items-center gap-3" style={{ margin: '24px 0' }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+        <span className="t-xs muted">OR SIGN UP WITH</span>
+        <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+      </div>
+
+      <div className="flex gap-3">
+        <button className="btn btn-outline" style={{ flex: 1 }} disabled={busy} onClick={async () => {
+          setBusy(true);
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: window.location.origin },
+          });
+          if (error) { toast(error.message, 'error'); setBusy(false); }
+        }}>
+          <GoogleIcon /> Google
+        </button>
+        <button className="btn btn-dark" style={{ flex: 1 }} disabled={busy} onClick={async () => {
+          setBusy(true);
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'apple',
+            options: { redirectTo: window.location.origin },
+          });
+          if (error) { toast(error.message, 'error'); setBusy(false); }
+        }}>
+          <AppleIcon /> Apple
+        </button>
+      </div>
 
       <div className="text-center mt-auto" style={{ paddingTop: 20 }}>
         <span className="t-sm muted">Already have an account? </span>
