@@ -93,4 +93,31 @@ export const adminApi = {
     if (error) throw error;
     return data;
   },
+
+  async getDriverVerifications({ page = 0, pageSize = 20, status } = {}) {
+    let q = supabase
+      .from('profiles')
+      .select('*', { count: 'exact' })
+      .eq('role', 'driver')
+      .order('updated_at', { ascending: false })
+      .range(page * pageSize, (page + 1) * pageSize - 1);
+
+    if (status) q = q.eq('verification_status', status);
+    const { data, count, error } = await q;
+    if (error) throw error;
+    return { data: data || [], total: count || 0 };
+  },
+
+  async updateVerificationStatus(id, status, reason) {
+    const patch = { verification_status: status };
+    if (reason) patch.verification_note = reason;
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(patch)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
 };

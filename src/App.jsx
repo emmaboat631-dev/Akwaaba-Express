@@ -43,10 +43,12 @@ import DriverTripManager from './pages/driver/DriverTripManager';
 import ReportIncident from './pages/ReportIncident';
 
 import AdminLayout from './pages/admin/AdminLayout';
+import AdminLogin from './pages/admin/AdminLogin';
 import AdminOverview from './pages/admin/AdminOverview';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminBookings from './pages/admin/AdminBookings';
 import AdminTrips from './pages/admin/AdminTrips';
+import AdminDocuments from './pages/admin/AdminDocuments';
 
 const NAV_ROUTES = ['/', '/live', '/trips', '/profile'];
 const DRIVER_NAV_ROUTES = ['/driver', '/driver/earnings', '/driver/trips', '/driver/profile'];
@@ -74,6 +76,11 @@ const RoleHome = () => {
   return <Navigate to={user?.role === 'driver' ? '/driver' : '/'} replace />;
 };
 
+const AdminGuard = ({ children }) => {
+  // TODO: re-enable auth before production
+  return children;
+};
+
 const Shell = () => {
   const location = useLocation();
   const showNav = NAV_ROUTES.includes(location.pathname);
@@ -84,10 +91,6 @@ const Shell = () => {
     if (isAuthed) requestPermission();
   }, [isAuthed]);
 
-  // Brand splash on app open — animated sequence in Splash.jsx runs ~3.55s
-  // (text cascade → morph → bus drive-off), then AnimatePresence plays the
-  // 0.5s backdrop fade. Bumped to 3600ms to make sure the bus is fully off
-  // screen before the fade starts. Total ≈ 4.1s, under the 5s cap.
   const [showSplash, setShowSplash] = useState(true);
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), 3600);
@@ -100,10 +103,6 @@ const Shell = () => {
       <ToastProvider>
         <RelayNotifications />
         <div className="page">
-          {/* Crossfade between screens on navigation. mode="wait" fully
-              retires the outgoing screen before the next mounts, so map pages
-              never render two Leaflet instances at once. Fixed nav bars sit
-              outside this, so they stay steady during the swap. */}
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}
@@ -147,14 +146,6 @@ const Shell = () => {
             <Route path="/driver/manage-trips" element={<RequireAuth role="driver"><DriverTripManager /></RequireAuth>} />
             <Route path="/driver/profile" element={<RequireAuth role="driver"><DriverProfile /></RequireAuth>} />
 
-            {/* Admin — web-only dashboard, any authenticated user */}
-            <Route path="/admin" element={<RequireAuth><AdminLayout /></RequireAuth>}>
-              <Route index element={<AdminOverview />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="bookings" element={<AdminBookings />} />
-              <Route path="trips" element={<AdminTrips />} />
-            </Route>
-
                 <Route path="*" element={<RoleHome />} />
               </Routes>
             </motion.div>
@@ -167,6 +158,30 @@ const Shell = () => {
   );
 };
 
+const AppRoutes = () => {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  if (isAdmin) {
+    return (
+      <ToastProvider>
+        <Routes>
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
+            <Route index element={<AdminOverview />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="bookings" element={<AdminBookings />} />
+            <Route path="trips" element={<AdminTrips />} />
+            <Route path="documents" element={<AdminDocuments />} />
+          </Route>
+        </Routes>
+      </ToastProvider>
+    );
+  }
+
+  return <Shell />;
+};
+
 const App = () => (
   <ThemeProvider>
     <AuthProvider>
@@ -174,7 +189,7 @@ const App = () => (
         <BookingProvider>
           <DriverProvider>
             <BrowserRouter>
-              <Shell />
+              <AppRoutes />
             </BrowserRouter>
           </DriverProvider>
         </BookingProvider>

@@ -25,12 +25,7 @@ const AdminBookings = () => {
   useEffect(load, [page, status]);
 
   const handleStatusChange = async (id, newStatus) => {
-    try {
-      await adminApi.updateBookingStatus(id, newStatus);
-      load();
-    } catch (err) {
-      console.error('Failed to update booking:', err);
-    }
+    try { await adminApi.updateBookingStatus(id, newStatus); load(); } catch (err) { console.error(err); }
   };
 
   const filtered = search
@@ -50,21 +45,16 @@ const AdminBookings = () => {
   };
 
   return (
-    <div className="admin-page">
-      <h1 className="admin-page-title">Bookings</h1>
-      <p className="admin-page-sub">All passenger bookings and payments</p>
+    <div className="adm-page">
+      <h1 className="adm-title">Bookings</h1>
+      <p className="adm-subtitle">All passenger bookings and payments</p>
 
-      <div className="admin-toolbar">
-        <div className="admin-search-box">
+      <div className="adm-bar">
+        <div className="adm-search">
           <Search size={16} />
-          <input
-            type="text"
-            placeholder="Search by booking ID or payment ref..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <input type="text" placeholder="Search booking ID or payment ref..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <select className="admin-select" value={status} onChange={(e) => { setStatus(e.target.value); setPage(0); }}>
+        <select className="adm-sel" value={status} onChange={(e) => { setStatus(e.target.value); setPage(0); }}>
           <option value="">All statuses</option>
           <option value="confirmed">Confirmed</option>
           <option value="cancelled">Cancelled</option>
@@ -72,52 +62,46 @@ const AdminBookings = () => {
         </select>
       </div>
 
-      {loading ? (
-        <div className="admin-loading">Loading bookings...</div>
-      ) : filtered.length === 0 ? (
-        <div className="admin-empty">No bookings found</div>
-      ) : (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Route</th>
-                <th>Type</th>
-                <th>Passengers</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((b) => (
-                <tr key={b.id}>
-                  <td className="admin-mono">{b.id.slice(0, 8)}</td>
-                  <td>{b.type === 'live' ? (b.live_route || 'Live ride') : routeLabel(b.trip)}</td>
-                  <td><span className={`admin-badge admin-badge-${b.type === 'live' ? 'blue' : 'purple'}`}>{b.type}</span></td>
-                  <td>{b.passengers?.length || 0}</td>
-                  <td className="admin-bold">{formatCedi(b.amount)}</td>
-                  <td><span className={`admin-badge admin-badge-${b.status === 'confirmed' ? 'green' : b.status === 'cancelled' ? 'red' : 'gray'}`}>{b.status}</span></td>
-                  <td className="admin-muted">{new Date(b.created_at).toLocaleDateString()}</td>
-                  <td>
-                    {b.status === 'confirmed' && (
-                      <button className="admin-action-btn admin-action-danger" onClick={() => handleStatusChange(b.id, 'cancelled')}>Cancel</button>
-                    )}
-                    {b.status === 'cancelled' && (
-                      <button className="admin-action-btn" onClick={() => handleStatusChange(b.id, 'confirmed')}>Restore</button>
-                    )}
-                  </td>
+      {loading ? <div className="adm-loader">Loading...</div> : filtered.length === 0 ? <div className="adm-empty">No bookings found</div> : (
+        <div className="adm-card">
+          <div className="adm-tbl-wrap">
+            <table className="adm-tbl">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Route</th>
+                  <th>Type</th>
+                  <th>Pax</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((b) => (
+                  <tr key={b.id}>
+                    <td className="adm-mono">{b.id.slice(0, 8)}</td>
+                    <td>{b.type === 'live' ? (b.live_route || 'Live ride') : routeLabel(b.trip)}</td>
+                    <td><span className={`adm-pill ${b.type}`}>{b.type}</span></td>
+                    <td>{b.passengers?.length || 0}</td>
+                    <td className="adm-bold">{formatCedi(b.amount)}</td>
+                    <td><span className={`adm-pill ${b.status}`}>{b.status}</span></td>
+                    <td className="adm-dim">{new Date(b.created_at).toLocaleDateString()}</td>
+                    <td>
+                      {b.status === 'confirmed' && <button className="adm-act danger" onClick={() => handleStatusChange(b.id, 'cancelled')}>Cancel</button>}
+                      {b.status === 'cancelled' && <button className="adm-act" onClick={() => handleStatusChange(b.id, 'confirmed')}>Restore</button>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {totalPages > 1 && (
-        <div className="admin-pagination">
+        <div className="adm-pag">
           <button disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft size={16} /> Prev</button>
           <span>Page {page + 1} of {totalPages}</span>
           <button disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Next <ChevronRight size={16} /></button>

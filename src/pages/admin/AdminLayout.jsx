@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Ticket, Bus, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Ticket, Bus, FileCheck, LogOut, Menu, X, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const NAV = [
@@ -8,54 +8,102 @@ const NAV = [
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/bookings', icon: Ticket, label: 'Bookings' },
   { to: '/admin/trips', icon: Bus, label: 'Trips' },
+  { to: '/admin/documents', icon: FileCheck, label: 'Verification' },
 ];
 
 const AdminLayout = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem('adm-theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    document.body.classList.add('adm-active');
+    return () => document.body.classList.remove('adm-active');
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    localStorage.setItem('adm-theme', dark ? 'dark' : 'light');
+    return () => document.documentElement.removeAttribute('data-theme');
+  }, [dark]);
 
   const handleLogout = async () => {
     await logout();
-    navigate('/signin');
+    navigate('/admin/login');
   };
 
   return (
-    <div className="admin-shell">
-      <aside className="admin-sidebar">
-        <div className="admin-logo">
-          <div className="admin-logo-mark">AE</div>
-          <span className="admin-logo-text">Akwaaba Admin</span>
+    <div className="adm">
+      {!mobileOpen && (
+        <button className="adm-burger" onClick={() => setMobileOpen(true)}>
+          <Menu size={20} />
+        </button>
+      )}
+
+      <aside className={`adm-side${mobileOpen ? ' open' : ''}`}>
+        <div className="adm-brand">
+          <div className="adm-brand-icon">AE</div>
+          <span className="adm-brand-name">Akwaaba Express</span>
+          <button className="adm-close" onClick={() => setMobileOpen(false)}>
+            <X size={18} />
+          </button>
         </div>
 
-        <nav className="admin-nav">
+        <div className="adm-nav-label">Menu</div>
+        <nav className="adm-links">
           {NAV.map(({ to, icon: Icon, label, end }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
-              className={({ isActive }) => `admin-nav-item${isActive ? ' active' : ''}`}
+              className={({ isActive }) => `adm-link${isActive ? ' active' : ''}`}
+              onClick={() => setMobileOpen(false)}
             >
-              <Icon size={18} />
+              <Icon size={16} />
               <span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="admin-sidebar-footer">
-          <div className="admin-user-info">
-            <div className="admin-avatar">{(user?.name || 'A')[0].toUpperCase()}</div>
-            <div className="admin-user-meta">
-              <div className="admin-user-name">{user?.name || 'Admin'}</div>
-              <div className="admin-user-role">{user?.role}</div>
+        <div className="adm-theme-toggle">
+          <button
+            className={`adm-theme-btn${!dark ? ' active' : ''}`}
+            onClick={() => setDark(false)}
+            title="Light mode"
+          >
+            <Sun size={15} /> <span>Light</span>
+          </button>
+          <button
+            className={`adm-theme-btn${dark ? ' active' : ''}`}
+            onClick={() => setDark(true)}
+            title="Dark mode"
+          >
+            <Moon size={15} /> <span>Dark</span>
+          </button>
+        </div>
+
+        <div className="adm-side-foot">
+          <div className="adm-who">
+            <div className="adm-who-avatar">{(user?.name || 'A')[0].toUpperCase()}</div>
+            <div>
+              <div className="adm-who-name">{user?.name || 'Admin'}</div>
+              <div className="adm-who-role">{user?.email || user?.role}</div>
             </div>
           </div>
-          <button className="admin-logout-btn" onClick={handleLogout} title="Sign out">
+          <button className="adm-logout" onClick={handleLogout} title="Sign out">
             <LogOut size={16} />
           </button>
         </div>
       </aside>
 
-      <main className="admin-main">
+      {mobileOpen && <div className="adm-overlay" onClick={() => setMobileOpen(false)} />}
+
+      <main className="adm-body">
         <Outlet />
       </main>
     </div>

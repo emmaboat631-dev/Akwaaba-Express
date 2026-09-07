@@ -31,62 +31,55 @@ const AdminUsers = () => {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="admin-page">
-      <h1 className="admin-page-title">Users</h1>
-      <p className="admin-page-sub">Manage passengers and drivers</p>
+    <div className="adm-page">
+      <h1 className="adm-title">Users</h1>
+      <p className="adm-subtitle">Manage passengers and drivers</p>
 
-      <div className="admin-toolbar">
-        <div className="admin-search-box">
+      <div className="adm-bar">
+        <div className="adm-search">
           <Search size={16} />
-          <input
-            type="text"
-            placeholder="Search by name, email, phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <input type="text" placeholder="Search name, email, phone..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <select className="admin-select" value={role} onChange={(e) => { setRole(e.target.value); setPage(0); }}>
+        <select className="adm-sel" value={role} onChange={(e) => { setRole(e.target.value); setPage(0); }}>
           <option value="">All roles</option>
           <option value="passenger">Passengers</option>
           <option value="driver">Drivers</option>
         </select>
       </div>
 
-      {loading ? (
-        <div className="admin-loading">Loading users...</div>
-      ) : filtered.length === 0 ? (
-        <div className="admin-empty">No users found</div>
-      ) : (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Role</th>
-                <th>Guest</th>
-                <th>Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((u) => (
-                <tr key={u.id}>
-                  <td className="admin-bold">{u.name || '—'}</td>
-                  <td>{u.email || '—'}</td>
-                  <td>{u.phone || '—'}</td>
-                  <td><span className={`admin-badge admin-badge-${u.role === 'driver' ? 'purple' : 'blue'}`}>{u.role}</span></td>
-                  <td>{u.is_guest ? 'Yes' : 'No'}</td>
-                  <td className="admin-muted">{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+      {loading ? <div className="adm-loader">Loading users...</div> : filtered.length === 0 ? <div className="adm-empty">No users found</div> : (
+        <div className="adm-card">
+          <div className="adm-tbl-wrap">
+            <table className="adm-tbl">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Role</th>
+                  <th>Guest</th>
+                  <th>Joined</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((u) => (
+                  <tr key={u.id}>
+                    <td className="adm-bold">{u.name || '—'}</td>
+                    <td>{u.email || '—'}</td>
+                    <td>{u.phone || '—'}</td>
+                    <td><span className={`adm-pill ${u.role}`}>{u.role}</span></td>
+                    <td>{u.is_guest ? 'Yes' : 'No'}</td>
+                    <td className="adm-dim">{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {totalPages > 1 && (
-        <div className="admin-pagination">
+        <div className="adm-pag">
           <button disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft size={16} /> Prev</button>
           <span>Page {page + 1} of {totalPages}</span>
           <button disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Next <ChevronRight size={16} /></button>
