@@ -80,6 +80,7 @@ const SignIn = () => {
         </div>
         <h1 className="t-display" style={{ fontSize: 34, lineHeight: 1.1, marginBottom: 8 }}>Welcome back</h1>
         <p className="muted">Sign in to book seats and track live buses.</p>
+        <p className="t-xs muted" style={{ marginTop: 6, opacity: 0.7 }}>Your role (passenger or driver) was set when you signed up.</p>
       </div>
 
       <form onSubmit={submit}>

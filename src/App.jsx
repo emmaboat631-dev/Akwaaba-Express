@@ -13,6 +13,8 @@ import DriverBottomNav from './components/driver/DriverBottomNav';
 import Splash from './components/Splash';
 import RelayNotifications from './components/RelayNotifications';
 import { requestPermission } from './services/notifications';
+import OfflineBanner from './components/OfflineBanner';
+import OfflineGate from './components/OfflineGate';
 
 import Welcome from './pages/Welcome';
 import SignIn from './pages/SignIn';
@@ -56,17 +58,23 @@ const DRIVER_NAV_ROUTES = ['/driver', '/driver/earnings', '/driver/trips', '/dri
 const RequireAuth = ({ children, role }) => {
   const { isAuthed, user, loading } = useAuth();
   const location = useLocation();
-  // Wait until the profile fetch settles before deciding — otherwise a
-  // just-signed-in user (esp. guest via signInAnonymously) sees isAuthed=false
-  // for one tick and gets bounced back to /welcome.
   if (loading) return null;
   if (!isAuthed) return <Navigate to="/welcome" replace state={{ from: location.pathname }} />;
-  // Role is fixed at signup — a passenger hitting a driver route (or vice
-  // versa) bounces to their own home instead of seeing the wrong shell.
   if (role && user.role !== role) {
     return <Navigate to={user.role === 'driver' ? '/driver' : '/'} replace />;
   }
   return children;
+};
+
+const OfflineWelcome = () => {
+  const { isAuthed } = useAuth();
+  if (isAuthed) return <Navigate to="/" replace />;
+  return (
+    <>
+      <OfflineGate />
+      <Welcome />
+    </>
+  );
 };
 
 // Catch-all lands each signed-in role on its own home, avoiding a redundant
@@ -100,6 +108,7 @@ const Shell = () => {
   return (
     <div className="app-container">
       <AnimatePresence>{showSplash && <Splash />}</AnimatePresence>
+      <OfflineBanner />
       <ToastProvider>
         <RelayNotifications />
         <div className="page">
@@ -113,7 +122,7 @@ const Shell = () => {
               style={{ height: '100%' }}
             >
               <Routes location={location}>
-                <Route path="/welcome" element={<Welcome />} />
+                <Route path="/welcome" element={<OfflineWelcome />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/reset-password" element={<ResetPassword />} />

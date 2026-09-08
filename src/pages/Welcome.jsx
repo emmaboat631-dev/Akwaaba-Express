@@ -1,12 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { Bus, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Welcome = () => {
   const navigate = useNavigate();
-  const { isAuthed } = useAuth();
+  const { isAuthed, signInAsGuest } = useAuth();
+  const [guestLoading, setGuestLoading] = useState(false);
   if (isAuthed) return <Navigate to="/" replace />;
+
+  const handleGuest = async () => {
+    setGuestLoading(true);
+    try {
+      await signInAsGuest();
+      navigate('/', { replace: true });
+    } catch {
+      setGuestLoading(false);
+    }
+  };
 
   return (
     <div
@@ -65,6 +76,14 @@ const Welcome = () => {
         </button>
         <button className="btn" style={{ background: 'transparent', color: '#fff', marginTop: 10 }} onClick={() => navigate('/signin')}>
           I already have an account
+        </button>
+        <button
+          className="btn"
+          style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', marginTop: 8, fontSize: 14 }}
+          onClick={handleGuest}
+          disabled={guestLoading}
+        >
+          {guestLoading ? 'Loading…' : 'Continue as Guest'}
         </button>
       </div>
     </div>
