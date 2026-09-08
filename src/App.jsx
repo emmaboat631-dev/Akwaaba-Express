@@ -85,7 +85,10 @@ const RoleHome = () => {
 };
 
 const AdminGuard = ({ children }) => {
-  // TODO: re-enable auth before production
+  const { isAuthed, user, loading } = useAuth();
+  if (loading) return null;
+  if (!isAuthed) return <Navigate to="/admin/login" replace />;
+  if (user?.role !== 'admin') return <Navigate to="/admin/login" replace />;
   return children;
 };
 

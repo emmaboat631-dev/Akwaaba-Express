@@ -19,13 +19,24 @@ const AdminLogin = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
     if (err) {
+      setLoading(false);
       setError(err.message);
-    } else {
-      navigate('/admin');
+      return;
     }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single();
+    setLoading(false);
+    if (profile?.role !== 'admin') {
+      await supabase.auth.signOut();
+      setError('Access denied. This account is not an administrator.');
+      return;
+    }
+    navigate('/admin');
   };
 
   return (
