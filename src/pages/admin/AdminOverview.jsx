@@ -250,7 +250,7 @@ const AdminOverview = () => {
       </div>
 
       {/* Global search */}
-      <div className="adm-card" style={{ marginBottom: 20, position: 'relative' }}>
+      <div className="adm-card" style={{ marginBottom: 20, position: 'relative', padding: '12px 18px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Search size={16} style={{ color: 'var(--a-dim)', flexShrink: 0 }} />
           <input
@@ -304,7 +304,7 @@ const AdminOverview = () => {
             <h2>Revenue — Last {revDays} Days</h2>
             <span className="adm-card-badge">{formatCedi(weekTotal)}</span>
           </div>
-          <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+          <div style={{ display: 'flex', gap: 4, marginBottom: 12, padding: '0 18px' }}>
             {[7, 14, 30].map((d) => (
               <button
                 key={d}
