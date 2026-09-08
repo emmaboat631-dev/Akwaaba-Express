@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Users, Ticket, Bus, Wallet, TrendingUp, TrendingDown, ArrowRight, Clock, MapPin, Radio } from 'lucide-react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { Users, Ticket, Bus, Wallet, TrendingUp, TrendingDown, ArrowRight, Clock, MapPin, Radio, RefreshCw, Route } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
 import { formatCedi } from '../../utils/format';
@@ -102,6 +102,8 @@ const statusColor = {
   cancelled: '#CE1126',
 };
 
+const REFRESH_INTERVAL = 30_000;
+
 const AdminOverview = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -109,31 +111,45 @@ const AdminOverview = () => {
   const [todayTrips, setTodayTrips] = useState([]);
   const [dailyRevenue, setDailyRevenue] = useState([]);
   const [verifiedDrivers, setVerifiedDrivers] = useState(0);
+  const [topRoutes, setTopRoutes] = useState([]);
+  const [trends, setTrends] = useState({ revenue: null, bookings: null, users: null });
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(null);
+  const intervalRef = useRef(null);
+
+  const load = useCallback(async (isInitial = false) => {
+    try {
+      const [s, b, tt, dr, vd, tr, rt, bt, ut] = await Promise.all([
+        adminApi.getStats(),
+        adminApi.getBookings({ pageSize: 5 }),
+        adminApi.getTodayTrips(),
+        adminApi.getDailyRevenue(7),
+        adminApi.getOnlineDriverCount(),
+        adminApi.getTopRoutes(5),
+        adminApi.getRevenueTrend(),
+        adminApi.getBookingTrend(),
+        adminApi.getUserTrend(),
+      ]);
+      setStats(s);
+      setRecent(b.data);
+      setTodayTrips(tt);
+      setDailyRevenue(dr);
+      setVerifiedDrivers(vd);
+      setTopRoutes(tr);
+      setTrends({ revenue: rt.trend, bookings: bt.trend, users: ut.trend });
+      setLastRefresh(new Date());
+    } catch (err) {
+      console.error('Admin stats:', err);
+    } finally {
+      if (isInitial) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [s, b, tt, dr, vd] = await Promise.all([
-          adminApi.getStats(),
-          adminApi.getBookings({ pageSize: 5 }),
-          adminApi.getTodayTrips(),
-          adminApi.getDailyRevenue(7),
-          adminApi.getOnlineDriverCount(),
-        ]);
-        setStats(s);
-        setRecent(b.data);
-        setTodayTrips(tt);
-        setDailyRevenue(dr);
-        setVerifiedDrivers(vd);
-      } catch (err) {
-        console.error('Admin stats:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+    load(true);
+    intervalRef.current = setInterval(() => load(false), REFRESH_INTERVAL);
+    return () => clearInterval(intervalRef.current);
+  }, [load]);
 
   if (loading) {
     return (
@@ -159,13 +175,24 @@ const AdminOverview = () => {
           <h1 className="adm-title">Dashboard</h1>
           <p className="adm-subtitle">Akwaaba Express operations overview</p>
         </div>
+        {lastRefresh && (
+          <button
+            className="adm-refresh-btn"
+            onClick={() => load(false)}
+            title="Refresh now"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: '1px solid var(--a-line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: 'var(--a-dim)', fontSize: 12 }}
+          >
+            <RefreshCw size={13} />
+            <span>Updated {lastRefresh.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })}</span>
+          </button>
+        )}
       </div>
 
       {/* KPI cards */}
       <div className="adm-kpi-row">
-        <Kpi icon={Wallet} label="Total Revenue" value={formatCedi(stats?.revenue ?? 0)} color="#1FA971" />
-        <Kpi icon={Ticket} label="Tickets Sold" value={stats?.totalBookings ?? 0} color="#3B82F6" />
-        <Kpi icon={Users} label="Total Users" value={stats?.totalUsers ?? 0} color="#F4C430" />
+        <Kpi icon={Wallet} label="Total Revenue" value={formatCedi(stats?.revenue ?? 0)} trend={trends.revenue} trendLabel="vs last week" color="#1FA971" />
+        <Kpi icon={Ticket} label="Tickets Sold" value={stats?.totalBookings ?? 0} trend={trends.bookings} trendLabel="vs last week" color="#3B82F6" />
+        <Kpi icon={Users} label="Total Users" value={stats?.totalUsers ?? 0} trend={trends.users} trendLabel="vs last week" color="#F4C430" />
         <Kpi icon={Radio} label="Verified Drivers" value={verifiedDrivers} color="#9333ea" />
       </div>
 
@@ -186,6 +213,38 @@ const AdminOverview = () => {
           <Donut data={bookingsByStatus} />
         </div>
       </div>
+
+      {/* Top routes */}
+      {topRoutes.length > 0 && (
+        <div className="adm-card" style={{ marginBottom: 20 }}>
+          <div className="adm-card-head">
+            <h2><Route size={16} style={{ verticalAlign: -2, marginRight: 6 }} />Top Routes</h2>
+            <span className="adm-card-count">By bookings</span>
+          </div>
+          <div className="adm-tbl-wrap">
+            <table className="adm-tbl">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Route</th>
+                  <th style={{ textAlign: 'right' }}>Bookings</th>
+                  <th style={{ textAlign: 'right' }}>Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topRoutes.map((r, i) => (
+                  <tr key={i}>
+                    <td className="adm-dim">{i + 1}</td>
+                    <td className="adm-bold">{cityById(r.fromId)?.name || r.fromId} → {cityById(r.toId)?.name || r.toId}</td>
+                    <td style={{ textAlign: 'right' }}>{r.bookings}</td>
+                    <td style={{ textAlign: 'right' }} className="adm-bold">{formatCedi(r.revenue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Today's trips + Recent bookings side by side */}
       <div className="adm-grid-2">

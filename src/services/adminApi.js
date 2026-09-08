@@ -160,6 +160,100 @@ export const adminApi = {
     return count || 0;
   },
 
+  async getTopRoutes(limit = 5) {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('amount, status, trip:trip_id (from_id, to_id)')
+      .eq('status', 'confirmed');
+    if (error) throw error;
+
+    const routes = {};
+    (data || []).forEach((b) => {
+      if (!b.trip) return;
+      const key = `${b.trip.from_id}→${b.trip.to_id}`;
+      if (!routes[key]) routes[key] = { fromId: b.trip.from_id, toId: b.trip.to_id, bookings: 0, revenue: 0 };
+      routes[key].bookings += 1;
+      routes[key].revenue += Number(b.amount || 0);
+    });
+
+    return Object.values(routes)
+      .sort((a, b) => b.bookings - a.bookings)
+      .slice(0, limit);
+  },
+
+  async getRevenueTrend() {
+    const now = new Date();
+    const thisWeekStart = new Date(now);
+    thisWeekStart.setDate(now.getDate() - 7);
+    const lastWeekStart = new Date(now);
+    lastWeekStart.setDate(now.getDate() - 14);
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('amount, created_at')
+      .eq('status', 'confirmed')
+      .gte('created_at', lastWeekStart.toISOString());
+    if (error) throw error;
+
+    let thisWeek = 0, lastWeek = 0;
+    (data || []).forEach((b) => {
+      const d = new Date(b.created_at);
+      if (d >= thisWeekStart) thisWeek += Number(b.amount || 0);
+      else lastWeek += Number(b.amount || 0);
+    });
+
+    const trend = lastWeek > 0 ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100) : thisWeek > 0 ? 100 : 0;
+    return { thisWeek, lastWeek, trend };
+  },
+
+  async getUserTrend() {
+    const now = new Date();
+    const thisWeekStart = new Date(now);
+    thisWeekStart.setDate(now.getDate() - 7);
+    const lastWeekStart = new Date(now);
+    lastWeekStart.setDate(now.getDate() - 14);
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('created_at')
+      .gte('created_at', lastWeekStart.toISOString());
+    if (error) throw error;
+
+    let thisWeek = 0, lastWeek = 0;
+    (data || []).forEach((p) => {
+      const d = new Date(p.created_at);
+      if (d >= thisWeekStart) thisWeek++;
+      else lastWeek++;
+    });
+
+    const trend = lastWeek > 0 ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100) : thisWeek > 0 ? 100 : 0;
+    return { thisWeek, lastWeek, trend };
+  },
+
+  async getBookingTrend() {
+    const now = new Date();
+    const thisWeekStart = new Date(now);
+    thisWeekStart.setDate(now.getDate() - 7);
+    const lastWeekStart = new Date(now);
+    lastWeekStart.setDate(now.getDate() - 14);
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('created_at')
+      .gte('created_at', lastWeekStart.toISOString());
+    if (error) throw error;
+
+    let thisWeek = 0, lastWeek = 0;
+    (data || []).forEach((b) => {
+      const d = new Date(b.created_at);
+      if (d >= thisWeekStart) thisWeek++;
+      else lastWeek++;
+    });
+
+    const trend = lastWeek > 0 ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100) : thisWeek > 0 ? 100 : 0;
+    return { thisWeek, lastWeek, trend };
+  },
+
   async updateVerificationStatus(id, status, reason) {
     const patch = { verification_status: status };
     if (reason) patch.verification_note = reason;
