@@ -21,6 +21,7 @@ import Welcome from './pages/Welcome';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import ResetPassword from './pages/ResetPassword';
+import VerifyOtp from './pages/VerifyOtp';
 import Home from './pages/Home';
 import LiveBuses from './pages/LiveBuses';
 import LiveTracking from './pages/LiveTracking';
@@ -130,6 +131,7 @@ const Shell = () => {
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify" element={<VerifyOtp />} />
 
             {/* Passenger */}
             <Route path="/" element={<RequireAuth role="passenger"><Home /></RequireAuth>} />

@@ -52,7 +52,8 @@ const SignUp = () => {
     if (!passwordMeetsRules(form.password)) { toast('Password doesn’t meet all requirements', 'error'); return; }
     if (form.password !== form.confirm) { toast('Passwords do not match', 'error'); return; }
     
-    const { error } = await supabase.auth.signUp({
+    setBusy(true);
+    const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
@@ -66,11 +67,17 @@ const SignUp = () => {
 
     if (error) {
       toast(error.message, 'error');
+      setBusy(false);
       return;
     }
 
-    toast('Account created. Akwaaba!', 'success');
-    navigate(role === 'driver' ? '/driver' : '/', { replace: true });
+    if (data?.user && !data.session) {
+      toast('Verification code sent to your email', 'success');
+      navigate('/verify', { replace: true, state: { email: form.email, role } });
+    } else {
+      toast('Account created. Akwaaba!', 'success');
+      navigate(role === 'driver' ? '/driver' : '/', { replace: true });
+    }
   };
 
   return (
