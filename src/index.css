@@ -704,8 +704,73 @@ h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
 .adm-card-foot { padding: 14px 20px 18px; display: flex; align-items: baseline; gap: 10px; }
 .adm-card-big { font-size: 22px; font-weight: 700; color: var(--a-ink); letter-spacing: -0.5px; }
 .adm-card-small { font-size: 12px; color: var(--a-muted); }
+.adm-card-badge { font-size: 14px; font-weight: 700; color: var(--a-green); background: rgba(31,169,113,0.1); padding: 3px 10px; border-radius: 6px; }
+.adm-card-count { font-size: 12px; color: var(--a-muted); font-weight: 500; }
 
-.adm-grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 20px; }
+.adm-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+/* ----- Bar chart ----- */
+.adm-bar-chart { padding: 12px 20px 8px; }
+.adm-bar-chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; }
+.adm-bar-col {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  height: 100%; position: relative;
+}
+.adm-bar {
+  width: 70%; border-radius: 4px 4px 0 0;
+  transition: height 0.4s ease;
+  min-height: 4px;
+}
+.adm-bar-label { font-size: 10px; color: var(--a-muted); margin-top: 6px; }
+.adm-bar-tooltip {
+  position: absolute; top: -4px; left: 50%; transform: translate(-50%, -100%);
+  font-size: 10px; font-weight: 600; color: var(--a-ink);
+  background: var(--a-surface); border: 1px solid var(--a-line); border-radius: 4px;
+  padding: 2px 6px; white-space: nowrap;
+  opacity: 0; transition: opacity 0.15s;
+  pointer-events: none;
+}
+.adm-bar-col:hover .adm-bar-tooltip { opacity: 1; }
+
+/* ----- Today's trips list ----- */
+.adm-today-list { padding: 4px 20px 16px; display: flex; flex-direction: column; gap: 0; }
+.adm-today-item {
+  display: grid; grid-template-columns: auto 1fr auto;
+  align-items: center; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--a-line);
+  font-size: 13px;
+}
+.adm-today-item:last-child { border-bottom: none; }
+.adm-today-time {
+  display: flex; align-items: center; gap: 5px;
+  font-weight: 600; color: var(--a-ink); white-space: nowrap;
+}
+.adm-today-route {
+  display: flex; align-items: center; gap: 5px;
+  color: var(--a-ink-2); text-transform: capitalize;
+}
+.adm-today-meta {
+  display: flex; align-items: center; gap: 8px;
+}
+.adm-pill-sm {
+  font-size: 11px; font-weight: 600; padding: 2px 8px;
+  border-radius: 4px; text-transform: capitalize;
+}
+.adm-pill-sm.confirmed { background: rgba(31,169,113,0.12); color: #1FA971; }
+.adm-pill-sm.cancelled { background: rgba(206,17,38,0.12); color: #CE1126; }
+.adm-pill-sm.completed { background: rgba(59,130,246,0.12); color: #3B82F6; }
+
+/* ----- Recent bookings list ----- */
+.adm-recent-list { padding: 4px 20px 16px; display: flex; flex-direction: column; }
+.adm-recent-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--a-line);
+}
+.adm-recent-item:last-child { border-bottom: none; }
+.adm-recent-left { display: flex; flex-direction: column; gap: 2px; }
+.adm-recent-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 
 .adm-text-btn {
   display: flex; align-items: center; gap: 4px;
@@ -1011,4 +1076,10 @@ h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
   .adm-modal { border-radius: 12px; }
   .adm-detail-grid { grid-template-columns: 1fr; gap: 12px; }
   .adm-verify-btns { flex-direction: column; }
+  .adm-bar-chart { padding: 10px 16px 6px; }
+  .adm-bar-chart-bars { height: 110px; }
+  .adm-today-list { padding: 4px 16px 12px; }
+  .adm-today-item { grid-template-columns: 1fr; gap: 4px; padding: 8px 0; }
+  .adm-recent-list { padding: 4px 16px 12px; }
+  .adm-recent-item { font-size: 12px; }
 }

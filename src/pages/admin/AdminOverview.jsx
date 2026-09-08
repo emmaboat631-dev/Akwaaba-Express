@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Ticket, Bus, Wallet, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
+import { Users, Ticket, Bus, Wallet, TrendingUp, TrendingDown, ArrowRight, Clock, MapPin, Radio } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
 import { formatCedi } from '../../utils/format';
+
+const minutesToClock = (m) => {
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  const ap = h >= 12 ? 'PM' : 'AM';
+  return `${((h % 12) || 12)}:${String(mm).padStart(2, '0')} ${ap}`;
+};
 
 const Kpi = ({ icon: Icon, label, value, trend, trendLabel, color }) => (
   <div className="adm-kpi" style={{ '--k': color }}>
@@ -60,47 +67,64 @@ const Donut = ({ data }) => {
   );
 };
 
-const MiniChart = ({ data, color }) => {
+const BarChart = ({ data, color = '#1FA971' }) => {
   if (!data.length) return null;
-  const max = Math.max(...data, 1);
-  const w = 280, h = 80, pad = 2;
-  const points = data.map((v, i) => {
-    const x = pad + (i / (data.length - 1)) * (w - pad * 2);
-    const y = h - pad - ((v / max) * (h - pad * 2));
-    return `${x},${y}`;
-  });
-  const line = points.join(' ');
-  const area = `${pad},${h - pad} ${line} ${w - pad},${h - pad}`;
+  const max = Math.max(...data.map((d) => d.revenue), 1);
+  const barW = 100 / data.length;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="adm-chart-svg">
-      <defs>
-        <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
-        </linearGradient>
-      </defs>
-      <polygon points={area} fill="url(#cg)" />
-      <polyline points={line} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
+    <div className="adm-bar-chart">
+      <div className="adm-bar-chart-bars">
+        {data.map((d, i) => (
+          <div key={i} className="adm-bar-col" style={{ width: `${barW}%` }}>
+            <div className="adm-bar-tooltip">{formatCedi(d.revenue)}</div>
+            <div
+              className="adm-bar"
+              style={{
+                height: `${Math.max((d.revenue / max) * 100, 4)}%`,
+                background: d.revenue > 0 ? color : 'var(--a-line)',
+              }}
+            />
+            <span className="adm-bar-label">{d.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
+};
+
+const statusColor = {
+  active: '#1FA971',
+  boarding: '#F4A23B',
+  in_progress: '#3B82F6',
+  completed: '#8B918B',
+  cancelled: '#CE1126',
 };
 
 const AdminOverview = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [recent, setRecent] = useState([]);
+  const [todayTrips, setTodayTrips] = useState([]);
+  const [dailyRevenue, setDailyRevenue] = useState([]);
+  const [verifiedDrivers, setVerifiedDrivers] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [s, b] = await Promise.all([
+        const [s, b, tt, dr, vd] = await Promise.all([
           adminApi.getStats(),
-          adminApi.getBookings({ pageSize: 6 }),
+          adminApi.getBookings({ pageSize: 5 }),
+          adminApi.getTodayTrips(),
+          adminApi.getDailyRevenue(7),
+          adminApi.getOnlineDriverCount(),
         ]);
         setStats(s);
         setRecent(b.data);
+        setTodayTrips(tt);
+        setDailyRevenue(dr);
+        setVerifiedDrivers(vd);
       } catch (err) {
         console.error('Admin stats:', err);
       } finally {
@@ -125,39 +149,33 @@ const AdminOverview = () => {
     { label: 'Cancelled', value: recent.filter((b) => b.status === 'cancelled').length, color: '#CE1126' },
   ];
 
-  const revenueData = recent
-    .filter((b) => b.status === 'confirmed')
-    .map((b) => Number(b.amount || 0))
-    .reverse();
+  const weekTotal = dailyRevenue.reduce((s, d) => s + d.revenue, 0);
 
   return (
     <div className="adm-page">
       <div className="adm-page-head">
         <div>
-          <h1 className="adm-title">Sales & Revenue</h1>
+          <h1 className="adm-title">Dashboard</h1>
           <p className="adm-subtitle">Akwaaba Express operations overview</p>
         </div>
       </div>
 
+      {/* KPI cards */}
       <div className="adm-kpi-row">
         <Kpi icon={Wallet} label="Total Revenue" value={formatCedi(stats?.revenue ?? 0)} trend={12} color="#1FA971" />
         <Kpi icon={Ticket} label="Tickets Sold" value={stats?.totalBookings ?? 0} trend={8} trendLabel="This month" color="#3B82F6" />
         <Kpi icon={Users} label="Total Users" value={stats?.totalUsers ?? 0} trend={5} color="#F4C430" />
-        <Kpi icon={Bus} label="Active Trips" value={stats?.totalTrips ?? 0} trend={-2} color="#9333ea" />
+        <Kpi icon={Radio} label="Verified Drivers" value={verifiedDrivers} color="#9333ea" />
       </div>
 
+      {/* Revenue bar chart + Booking donut */}
       <div className="adm-grid-2">
         <div className="adm-card">
           <div className="adm-card-head">
-            <h2>Revenue Trend</h2>
+            <h2>Revenue — Last 7 Days</h2>
+            <span className="adm-card-badge">{formatCedi(weekTotal)}</span>
           </div>
-          <div className="adm-card-chart">
-            <MiniChart data={revenueData.length >= 2 ? revenueData : [0, 40, 30, 60, 45, 80, 65]} color="#1FA971" />
-          </div>
-          <div className="adm-card-foot">
-            <span className="adm-card-big">{formatCedi(stats?.revenue ?? 0)}</span>
-            <span className="adm-card-small">Total Sales</span>
-          </div>
+          <BarChart data={dailyRevenue} />
         </div>
 
         <div className="adm-card">
@@ -168,39 +186,72 @@ const AdminOverview = () => {
         </div>
       </div>
 
-      <div className="adm-card">
-        <div className="adm-card-head">
-          <h2>Recent Bookings</h2>
-          <button className="adm-text-btn" onClick={() => navigate('/admin/bookings')}>View all <ArrowRight size={14} /></button>
-        </div>
-        {recent.length === 0 ? (
-          <div className="adm-empty">No bookings yet</div>
-        ) : (
-          <div className="adm-tbl-wrap">
-            <table className="adm-tbl">
-              <thead>
-                <tr>
-                  <th>Booking ID</th>
-                  <th>Type</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recent.map((b) => (
-                  <tr key={b.id}>
-                    <td className="adm-mono">{b.id.slice(0, 8)}</td>
-                    <td><span className={`adm-pill ${b.type}`}>{b.type}</span></td>
-                    <td className="adm-bold">{formatCedi(b.amount)}</td>
-                    <td><span className={`adm-pill ${b.status}`}>{b.status}</span></td>
-                    <td className="adm-dim">{new Date(b.created_at).toLocaleDateString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* Today's trips + Recent bookings side by side */}
+      <div className="adm-grid-2">
+        {/* Today's trips */}
+        <div className="adm-card">
+          <div className="adm-card-head">
+            <h2>Today's Schedule</h2>
+            <span className="adm-card-count">{todayTrips.length} trip{todayTrips.length !== 1 ? 's' : ''}</span>
           </div>
-        )}
+          {todayTrips.length === 0 ? (
+            <div className="adm-empty">No trips scheduled for today</div>
+          ) : (
+            <div className="adm-today-list">
+              {todayTrips.slice(0, 6).map((t) => (
+                <div key={t.id} className="adm-today-item">
+                  <div className="adm-today-time">
+                    <Clock size={13} />
+                    <span>{minutesToClock(t.depart_mins)}</span>
+                  </div>
+                  <div className="adm-today-route">
+                    <MapPin size={13} />
+                    <span>{t.from_id} → {t.to_id}</span>
+                  </div>
+                  <div className="adm-today-meta">
+                    <span className="adm-pill-sm" style={{ background: `${statusColor[t.status] || '#8B918B'}20`, color: statusColor[t.status] || '#8B918B' }}>
+                      {t.status}
+                    </span>
+                    <span className="adm-dim">{t.operator?.name}</span>
+                  </div>
+                </div>
+              ))}
+              {todayTrips.length > 6 && (
+                <button className="adm-text-btn" onClick={() => navigate('/admin/trips')} style={{ marginTop: 8 }}>
+                  +{todayTrips.length - 6} more <ArrowRight size={14} />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Recent bookings */}
+        <div className="adm-card">
+          <div className="adm-card-head">
+            <h2>Recent Bookings</h2>
+            <button className="adm-text-btn" onClick={() => navigate('/admin/bookings')}>View all <ArrowRight size={14} /></button>
+          </div>
+          {recent.length === 0 ? (
+            <div className="adm-empty">No bookings yet</div>
+          ) : (
+            <div className="adm-recent-list">
+              {recent.map((b) => (
+                <div key={b.id} className="adm-recent-item">
+                  <div className="adm-recent-left">
+                    <span className="adm-mono" style={{ fontSize: 12, opacity: 0.5 }}>#{b.id.slice(0, 8)}</span>
+                    <span className="adm-bold" style={{ fontSize: 13 }}>
+                      {b.trip ? `${b.trip.from_id} → ${b.trip.to_id}` : b.live_route || 'Live hail'}
+                    </span>
+                  </div>
+                  <div className="adm-recent-right">
+                    <span className="adm-bold">{formatCedi(b.amount)}</span>
+                    <span className={`adm-pill-sm ${b.status}`}>{b.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

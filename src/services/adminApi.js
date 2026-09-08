@@ -108,6 +108,58 @@ export const adminApi = {
     return { data: data || [], total: count || 0 };
   },
 
+  async getTodayTrips() {
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await supabase
+      .from('trips')
+      .select(`
+        *,
+        operator:operator_id (id, name, mark, color),
+        busType:bus_type_id (id, name, seats)
+      `)
+      .eq('travel_date', today)
+      .order('depart_mins', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getDailyRevenue(days = 7) {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('amount, status, created_at')
+      .eq('status', 'confirmed')
+      .gte('created_at', since.toISOString())
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    const byDay = {};
+    (data || []).forEach((b) => {
+      const day = b.created_at.split('T')[0];
+      byDay[day] = (byDay[day] || 0) + Number(b.amount || 0);
+    });
+
+    const result = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      result.push({ date: key, label: d.toLocaleDateString('en', { weekday: 'short' }), revenue: byDay[key] || 0 });
+    }
+    return result;
+  },
+
+  async getOnlineDriverCount() {
+    const { count, error } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'driver')
+      .eq('verification_status', 'verified');
+    if (error) throw error;
+    return count || 0;
+  },
+
   async updateVerificationStatus(id, status, reason) {
     const patch = { verification_status: status };
     if (reason) patch.verification_note = reason;
