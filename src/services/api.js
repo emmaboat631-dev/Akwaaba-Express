@@ -146,12 +146,6 @@ export const api = {
     return liveTracking.getBuses();
   },
 
-  async pay({ amount, method }) {
-    await delay(1600);
-    if (!method) throw new Error('No payment method selected');
-    return { reference: uid('TXN').toUpperCase(), amount, method, status: 'paid' };
-  },
-
   async createBooking(draft, userId) {
     if (draft?.type === 'live' && draft?.trip?.id) {
       liveTracking.bookSeat(draft.trip.id);
