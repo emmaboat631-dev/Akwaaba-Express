@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, addDays, parseISO } from 'date-fns';
-import { ArrowDownUp, Calendar, Minus, Plus, Zap, CalendarClock, ChevronRight, Star } from 'lucide-react';
+import { ArrowDownUp, Calendar, Minus, Plus, Zap, CalendarClock, ChevronRight, Star, Search as SearchIcon } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 import { useNearbyBuses } from '../hooks/useNearbyBuses';
@@ -17,6 +17,7 @@ import DatePicker from '../components/DatePicker';
 import LiveBusCard from '../components/LiveBusCard';
 import Avatar from '../components/Avatar';
 import { SkeletonList } from '../components/Skeleton';
+import Onboarding from '../components/Onboarding';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -34,8 +35,16 @@ const Home = () => {
   const [picker, setPicker] = useState(null); // 'from' | 'to' | null
   const [showCal, setShowCal] = useState(false);
   const [recent, setRecent] = useState(() => storage.get(KEYS.recentSearches, []));
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try { return !localStorage.getItem('akw_onboarded'); } catch { return false; }
+  });
 
   const firstName = user?.name?.split(' ')[0] || 'traveller';
+
+  const finishOnboarding = () => {
+    try { localStorage.setItem('akw_onboarded', '1'); } catch {}
+    setShowOnboarding(false);
+  };
 
   const dateChips = useMemo(
     () => [0, 1, 2].map((d) => {
@@ -98,8 +107,10 @@ const Home = () => {
 
   return (
     <div className="screen has-nav fade-up">
+      {showOnboarding && <Onboarding onFinish={finishOnboarding} />}
+
       {/* Top bar: greeting + avatar */}
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-start mb-3">
         <div style={{ paddingTop: 4 }}>
           <div className="t-sm muted">Akwaaba, {firstName}</div>
           <h1 className="t-display mt-1" style={{ fontSize: 34 }}>
@@ -108,6 +119,20 @@ const Home = () => {
         </div>
         <Avatar name={user?.name} color={user?.avatarColor} size={44} onClick={() => navigate('/profile')} />
       </div>
+
+      {/* Quick search bar */}
+      <button
+        className="flex items-center gap-3 mb-4"
+        style={{
+          width: '100%', padding: '12px 16px', borderRadius: 14,
+          background: 'var(--surface-2)', border: '1px solid var(--line)',
+          textAlign: 'left', cursor: 'pointer',
+        }}
+        onClick={() => setPicker('to')}
+      >
+        <SearchIcon size={18} className="muted" />
+        <span className="muted t-sm">Where are you travelling to?</span>
+      </button>
 
       {/* Mode chips */}
       <div className="flex gap-2 mb-4">
