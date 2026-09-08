@@ -41,7 +41,7 @@ export const mapBooking = (row) => {
     liveRoute: row.live_route,
     checkedInAt: row.checked_in_at,
     createdAt: row.created_at,
-    qrValue: `https://akwaaba-express.app/t/${row.id}`,
+    qrValue: `${window.location.origin}/ticket/${row.id}`,
     trip,
     passengers: (row.passengers || []).map((p) => ({
       name: p.name,
@@ -200,7 +200,7 @@ export const api = {
       ...draft,
       id: booking.id,
       status: 'confirmed',
-      qrValue: `https://akwaaba-express.app/t/${booking.id}`,
+      qrValue: `${window.location.origin}/ticket/${booking.id}`,
       createdAt: booking.created_at,
     };
   },

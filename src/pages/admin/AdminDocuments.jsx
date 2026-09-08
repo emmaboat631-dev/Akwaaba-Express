@@ -20,9 +20,9 @@ const StatusBadge = ({ status }) => {
 };
 
 const DetailModal = ({ driver, onClose, onAction }) => {
-  if (!driver) return null;
   const [reason, setReason] = useState('');
   const [acting, setActing] = useState(false);
+  if (!driver) return null;
 
   const handle = async (newStatus) => {
     setActing(true);
