@@ -162,9 +162,9 @@ const AdminOverview = () => {
 
       {/* KPI cards */}
       <div className="adm-kpi-row">
-        <Kpi icon={Wallet} label="Total Revenue" value={formatCedi(stats?.revenue ?? 0)} trend={12} color="#1FA971" />
-        <Kpi icon={Ticket} label="Tickets Sold" value={stats?.totalBookings ?? 0} trend={8} trendLabel="This month" color="#3B82F6" />
-        <Kpi icon={Users} label="Total Users" value={stats?.totalUsers ?? 0} trend={5} color="#F4C430" />
+        <Kpi icon={Wallet} label="Total Revenue" value={formatCedi(stats?.revenue ?? 0)} color="#1FA971" />
+        <Kpi icon={Ticket} label="Tickets Sold" value={stats?.totalBookings ?? 0} color="#3B82F6" />
+        <Kpi icon={Users} label="Total Users" value={stats?.totalUsers ?? 0} color="#F4C430" />
         <Kpi icon={Radio} label="Verified Drivers" value={verifiedDrivers} color="#9333ea" />
       </div>
 
