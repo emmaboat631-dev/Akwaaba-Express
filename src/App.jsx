@@ -54,6 +54,8 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminBookings from './pages/admin/AdminBookings';
 import AdminTrips from './pages/admin/AdminTrips';
 import AdminDocuments from './pages/admin/AdminDocuments';
+import AdminRoutes from './pages/admin/AdminRoutes';
+import AdminDrivers from './pages/admin/AdminDrivers';
 
 const NAV_ROUTES = ['/', '/live', '/trips', '/profile'];
 const DRIVER_NAV_ROUTES = ['/driver', '/driver/earnings', '/driver/trips', '/driver/profile'];
@@ -189,6 +191,8 @@ const AppRoutes = () => {
             <Route path="users" element={<AdminUsers />} />
             <Route path="bookings" element={<AdminBookings />} />
             <Route path="trips" element={<AdminTrips />} />
+            <Route path="routes" element={<AdminRoutes />} />
+            <Route path="drivers" element={<AdminDrivers />} />
             <Route path="documents" element={<AdminDocuments />} />
           </Route>
         </Routes>

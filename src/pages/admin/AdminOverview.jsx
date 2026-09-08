@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Users, Ticket, Bus, Wallet, TrendingUp, TrendingDown, ArrowRight, Clock, MapPin, Radio, RefreshCw, Route } from 'lucide-react';
+import { Users, Ticket, Bus, Wallet, TrendingUp, TrendingDown, ArrowRight, Clock, MapPin, Radio, RefreshCw, Route, Zap, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
 import { formatCedi } from '../../utils/format';
@@ -115,6 +115,11 @@ const AdminOverview = () => {
   const [trends, setTrends] = useState({ revenue: null, bookings: null, users: null });
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(null);
+  const [revDays, setRevDays] = useState(7);
+  const [liveFeed, setLiveFeed] = useState([]);
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [searching, setSearching] = useState(false);
   const intervalRef = useRef(null);
 
   const load = useCallback(async (isInitial = false) => {
@@ -123,7 +128,7 @@ const AdminOverview = () => {
         adminApi.getStats(),
         adminApi.getBookings({ pageSize: 5 }),
         adminApi.getTodayTrips(),
-        adminApi.getDailyRevenue(7),
+        adminApi.getDailyRevenue(revDays),
         adminApi.getOnlineDriverCount(),
         adminApi.getTopRoutes(5),
         adminApi.getRevenueTrend(),
@@ -143,13 +148,45 @@ const AdminOverview = () => {
     } finally {
       if (isInitial) setLoading(false);
     }
-  }, []);
+  }, [revDays]);
 
   useEffect(() => {
     load(true);
     intervalRef.current = setInterval(() => load(false), REFRESH_INTERVAL);
     return () => clearInterval(intervalRef.current);
   }, [load]);
+
+  useEffect(() => {
+    const unsub = adminApi.subscribeToBookings((booking) => {
+      setLiveFeed((prev) => [{ ...booking, _ts: Date.now() }, ...prev].slice(0, 10));
+    });
+    return unsub;
+  }, []);
+
+  const runSearch = useCallback(async (q) => {
+    if (!q.trim()) { setSearchResults(null); return; }
+    setSearching(true);
+    try {
+      const [users, bookings] = await Promise.all([
+        adminApi.getUsers({ pageSize: 8, role: undefined }),
+        adminApi.getBookings({ pageSize: 8 }),
+      ]);
+      const lq = q.toLowerCase();
+      const matchedUsers = users.data.filter((u) =>
+        (u.name || '').toLowerCase().includes(lq) || (u.email || '').toLowerCase().includes(lq)
+      );
+      const matchedBookings = bookings.data.filter((b) =>
+        b.id.toLowerCase().includes(lq) ||
+        (b.trip && (cityById(b.trip.from_id)?.name || '').toLowerCase().includes(lq)) ||
+        (b.trip && (cityById(b.trip.to_id)?.name || '').toLowerCase().includes(lq))
+      );
+      setSearchResults({ users: matchedUsers.slice(0, 5), bookings: matchedBookings.slice(0, 5) });
+    } catch (err) {
+      console.error('Search:', err);
+    } finally {
+      setSearching(false);
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -212,12 +249,77 @@ const AdminOverview = () => {
         <Kpi icon={Radio} label="Verified Drivers" value={verifiedDrivers} color="#9333ea" />
       </div>
 
+      {/* Global search */}
+      <div className="adm-card" style={{ marginBottom: 20, position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Search size={16} style={{ color: 'var(--a-dim)', flexShrink: 0 }} />
+          <input
+            type="text"
+            placeholder="Search users, bookings, routes..."
+            value={globalSearch}
+            onChange={(e) => { setGlobalSearch(e.target.value); runSearch(e.target.value); }}
+            style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontSize: 14, color: 'var(--a-fg)', padding: '8px 0' }}
+          />
+          {globalSearch && (
+            <button onClick={() => { setGlobalSearch(''); setSearchResults(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--a-dim)', fontSize: 16 }}>×</button>
+          )}
+        </div>
+        {searchResults && (
+          <div style={{ borderTop: '1px solid var(--a-line)', paddingTop: 12, marginTop: 8 }}>
+            {searching && <div className="adm-dim" style={{ fontSize: 13 }}>Searching...</div>}
+            {!searching && searchResults.users.length === 0 && searchResults.bookings.length === 0 && (
+              <div className="adm-dim" style={{ fontSize: 13 }}>No results found</div>
+            )}
+            {searchResults.users.length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--a-dim)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Users</div>
+                {searchResults.users.map((u) => (
+                  <div key={u.id} onClick={() => navigate('/admin/users')} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', cursor: 'pointer', fontSize: 13 }}>
+                    <span className="adm-bold">{u.name || '—'}</span>
+                    <span className="adm-dim">{u.email}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {searchResults.bookings.length > 0 && (
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--a-dim)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Bookings</div>
+                {searchResults.bookings.map((b) => (
+                  <div key={b.id} onClick={() => navigate('/admin/bookings')} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', cursor: 'pointer', fontSize: 13 }}>
+                    <span className="adm-mono" style={{ fontSize: 12 }}>#{b.id.slice(0, 8)}</span>
+                    <span className="adm-bold">{formatCedi(b.amount)}</span>
+                    <span className={`adm-pill-sm ${b.status}`}>{b.status}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Revenue bar chart + Booking donut */}
       <div className="adm-grid-2">
         <div className="adm-card">
           <div className="adm-card-head">
-            <h2>Revenue — Last 7 Days</h2>
+            <h2>Revenue — Last {revDays} Days</h2>
             <span className="adm-card-badge">{formatCedi(weekTotal)}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+            {[7, 14, 30].map((d) => (
+              <button
+                key={d}
+                onClick={() => setRevDays(d)}
+                style={{
+                  padding: '4px 10px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
+                  border: revDays === d ? '1px solid #1FA971' : '1px solid var(--a-line)',
+                  background: revDays === d ? '#1FA97118' : 'transparent',
+                  color: revDays === d ? '#1FA971' : 'var(--a-dim)',
+                  fontWeight: revDays === d ? 600 : 400,
+                }}
+              >
+                {d}d
+              </button>
+            ))}
           </div>
           <BarChart data={dailyRevenue} />
         </div>
@@ -258,6 +360,42 @@ const AdminOverview = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Live booking feed */}
+      {liveFeed.length > 0 && (
+        <div className="adm-card" style={{ marginBottom: 20 }}>
+          <div className="adm-card-head">
+            <h2><Zap size={16} style={{ verticalAlign: -2, marginRight: 6, color: '#F4A23B' }} />Live Bookings</h2>
+            <span className="adm-card-count" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#1FA971', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+              Real-time
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {liveFeed.map((b, i) => (
+              <div
+                key={b.id || i}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '10px 12px', borderRadius: 8,
+                  background: i === 0 ? 'var(--a-row-alt, #f8faf9)' : 'transparent',
+                  border: '1px solid var(--a-line)',
+                  animation: i === 0 ? 'fadeIn .4s ease' : undefined,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Ticket size={14} style={{ color: '#1FA971' }} />
+                  <span className="adm-mono" style={{ fontSize: 12, opacity: 0.6 }}>#{(b.id || '').slice(0, 8)}</span>
+                </div>
+                <span className="adm-bold" style={{ fontSize: 13 }}>{formatCedi(b.amount || 0)}</span>
+                <span className="adm-dim" style={{ fontSize: 11 }}>
+                  {b._ts ? new Date(b._ts).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'just now'}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}

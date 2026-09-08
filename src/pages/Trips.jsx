@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Ticket as TicketIcon, ChevronRight, X, Bus } from 'lucide-react';
+import { Ticket as TicketIcon, ChevronRight, X, Bus, Clock } from 'lucide-react';
 
 import { useTrips } from '../context/TripsContext';
 import { useToast } from '../context/ToastContext';
@@ -19,9 +19,24 @@ import { AnimatedList, AnimatedItem } from '../components/AnimatedList';
 
 const todayISO = () => format(new Date(), 'yyyy-MM-dd');
 
+const getCountdown = (dateISO, departMins) => {
+  if (!dateISO || departMins == null) return null;
+  const h = Math.floor(departMins / 60);
+  const m = departMins % 60;
+  const depart = new Date(`${dateISO}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`);
+  const diff = depart - Date.now();
+  if (diff <= 0) return null;
+  const days = Math.floor(diff / 86400000);
+  const hrs = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  if (days > 0) return `${days}d ${hrs}h`;
+  if (hrs > 0) return `${hrs}h ${mins}m`;
+  return `${mins}m`;
+};
+
 const isPast = (b) => b.status === 'cancelled' || (b.type === 'scheduled' && b.trip.dateISO < todayISO());
 
-const BookingRow = ({ booking, onOpen, onCancel }) => {
+const BookingRow = ({ booking, onOpen, onCancel, countdown }) => {
   const { trip } = booking;
   const operator = operatorById(trip.operatorId);
   const isLive = booking.type === 'live';
@@ -30,6 +45,12 @@ const BookingRow = ({ booking, onOpen, onCancel }) => {
 
   return (
     <div className="card">
+      {countdown && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '6px 10px', borderRadius: 8, background: 'var(--green-faint, #e8f5ee)', fontSize: 12, fontWeight: 600, color: 'var(--green, #1FA971)' }}>
+          <Clock size={13} />
+          <span>Departing in {countdown}</span>
+        </div>
+      )}
       <div className="flex items-center gap-3 card-pressable" onClick={onOpen}>
         <OperatorMark operator={operator} size={44} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -56,6 +77,12 @@ const Trips = () => {
   const toast = useToast();
   const [tab, setTab] = useState('upcoming');
   const loading = useBriefLoad();
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const { upcoming, past } = useMemo(() => ({
     upcoming: bookings.filter((b) => !isPast(b)),
@@ -98,6 +125,7 @@ const Trips = () => {
                   booking={b}
                   onOpen={() => navigate(`/ticket/${b.id}`)}
                   onCancel={tab === 'upcoming' ? () => { cancelBooking(b.id); toast('Booking cancelled', 'info'); } : undefined}
+                  countdown={tab === 'upcoming' && b.type === 'scheduled' ? getCountdown(b.trip.dateISO, b.trip.departMins) : null}
                 />
               </AnimatedItem>
             ))}

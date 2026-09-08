@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Ticket, Bus, FileCheck, LogOut, Menu, X, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Users, Ticket, Bus, FileCheck, LogOut, Menu, X, Sun, Moon, Route, UserCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const NAV = [
@@ -8,6 +8,8 @@ const NAV = [
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/bookings', icon: Ticket, label: 'Bookings' },
   { to: '/admin/trips', icon: Bus, label: 'Trips' },
+  { to: '/admin/routes', icon: Route, label: 'Routes' },
+  { to: '/admin/drivers', icon: UserCheck, label: 'Drivers' },
   { to: '/admin/documents', icon: FileCheck, label: 'Verification' },
 ];
 

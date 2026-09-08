@@ -155,6 +155,73 @@ export const adminApi = {
     return result;
   },
 
+  async getDailyRevenueRange(startDate, endDate) {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('amount, created_at')
+      .eq('status', 'confirmed')
+      .gte('created_at', startDate)
+      .lte('created_at', endDate)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    const byDay = {};
+    (data || []).forEach((b) => {
+      const day = b.created_at.split('T')[0];
+      byDay[day] = (byDay[day] || 0) + Number(b.amount || 0);
+    });
+
+    const result = [];
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().split('T')[0];
+      result.push({ date: key, label: d.toLocaleDateString('en', { month: 'short', day: 'numeric' }), revenue: byDay[key] || 0 });
+    }
+    return result;
+  },
+
+  async getDriverStats() {
+    const { data, error } = await supabase
+      .from('trips')
+      .select('operator_id, id');
+    if (error) throw error;
+
+    const { data: bookings, error: bErr } = await supabase
+      .from('bookings')
+      .select('trip_id, amount, seats, status')
+      .eq('status', 'confirmed');
+    if (bErr) throw bErr;
+
+    const tripDriverMap = {};
+    (data || []).forEach((t) => { tripDriverMap[t.id] = t.operator_id; });
+
+    const stats = {};
+    (bookings || []).forEach((b) => {
+      const driverId = tripDriverMap[b.trip_id];
+      if (!driverId) return;
+      if (!stats[driverId]) stats[driverId] = { trips: new Set(), passengers: 0, revenue: 0 };
+      stats[driverId].trips.add(b.trip_id);
+      stats[driverId].passengers += (b.seats || []).length;
+      stats[driverId].revenue += Number(b.amount || 0);
+    });
+
+    const result = {};
+    Object.entries(stats).forEach(([id, s]) => {
+      result[id] = { trips: s.trips.size, passengers: s.passengers, revenue: s.revenue };
+    });
+    return result;
+  },
+
+  subscribeToBookings(callback) {
+    const channel = supabase.channel('admin-bookings')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bookings' }, (payload) => {
+        callback(payload.new);
+      })
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  },
+
   async getOnlineDriverCount() {
     const { count, error } = await supabase
       .from('profiles')
