@@ -3,6 +3,7 @@ import { Users, Ticket, Bus, Wallet, TrendingUp, TrendingDown, ArrowRight, Clock
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
 import { formatCedi } from '../../utils/format';
+import { cityById } from '../../data/cities';
 
 const minutesToClock = (m) => {
   const h = Math.floor(m / 60);
@@ -206,7 +207,7 @@ const AdminOverview = () => {
                   </div>
                   <div className="adm-today-route">
                     <MapPin size={13} />
-                    <span>{t.from_id} → {t.to_id}</span>
+                    <span>{cityById(t.from_id)?.name || t.from_id} → {cityById(t.to_id)?.name || t.to_id}</span>
                   </div>
                   <div className="adm-today-meta">
                     <span className="adm-pill-sm" style={{ background: `${statusColor[t.status] || '#8B918B'}20`, color: statusColor[t.status] || '#8B918B' }}>
@@ -240,7 +241,7 @@ const AdminOverview = () => {
                   <div className="adm-recent-left">
                     <span className="adm-mono" style={{ fontSize: 12, opacity: 0.5 }}>#{b.id.slice(0, 8)}</span>
                     <span className="adm-bold" style={{ fontSize: 13 }}>
-                      {b.trip ? `${b.trip.from_id} → ${b.trip.to_id}` : b.live_route || 'Live hail'}
+                      {b.trip ? `${cityById(b.trip.from_id)?.name || b.trip.from_id} → ${cityById(b.trip.to_id)?.name || b.trip.to_id}` : b.live_route || 'Live hail'}
                     </span>
                   </div>
                   <div className="adm-recent-right">
