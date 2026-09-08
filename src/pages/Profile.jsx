@@ -18,6 +18,7 @@ import PhoneInput from '../components/PhoneInput';
 import { PAYMENT_PROVIDERS } from '../data/paymentProviders';
 import { isValidGhanaCard } from '../utils/format';
 import { isEnabled as notifEnabled, setEnabled as setNotifEnabled, requestPermission } from '../services/notifications';
+import PasswordChecklist, { passwordMeetsRules } from '../components/PasswordChecklist';
 
 const PLACE_ICONS = { home: Home, work: Briefcase, other: MapPin };
 
@@ -264,37 +265,63 @@ const Profile = () => {
       </div>
       {pwOpen && (
         <div className="card mb-4" style={{ padding: 16 }}>
+          <div className="field-label">Current password</div>
+          <div className="field mb-3">
+            <Lock size={18} className="muted" />
+            <input
+              type={showPw ? 'text' : 'password'}
+              placeholder="Enter current password"
+              value={pwForm.current}
+              onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })}
+              autoComplete="current-password"
+            />
+          </div>
           <div className="field-label">New password</div>
           <div className="field mb-3">
             <Lock size={18} className="muted" />
             <input
               type={showPw ? 'text' : 'password'}
-              placeholder="At least 6 characters"
+              placeholder="Enter new password"
               value={pwForm.next}
               onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })}
+              autoComplete="new-password"
               style={{ flex: 1, minWidth: 0 }}
             />
             <button type="button" className="muted" onClick={() => setShowPw((v) => !v)}>
               {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+          {(pwForm.next.length > 0 || pwForm.confirm.length > 0) && (
+            <PasswordChecklist value={pwForm.next} confirm={pwForm.confirm} />
+          )}
           <div className="field-label">Confirm new password</div>
           <div className="field mb-3">
             <Lock size={18} className="muted" />
             <input
               type={showPw ? 'text' : 'password'}
-              placeholder="Repeat password"
+              placeholder="Repeat new password"
               value={pwForm.confirm}
               onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
+              autoComplete="new-password"
             />
           </div>
           <button
             className="btn btn-primary btn-sm"
             disabled={changingPw}
             onClick={async () => {
-              if (pwForm.next.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
+              if (!pwForm.current) { toast('Enter your current password', 'error'); return; }
+              if (!passwordMeetsRules(pwForm.next)) { toast('Password doesn\'t meet all requirements', 'error'); return; }
               if (pwForm.next !== pwForm.confirm) { toast('Passwords do not match', 'error'); return; }
               setChangingPw(true);
+              const { error: authErr } = await supabase.auth.signInWithPassword({
+                email: user.email,
+                password: pwForm.current,
+              });
+              if (authErr) {
+                setChangingPw(false);
+                toast('Current password is incorrect', 'error');
+                return;
+              }
               const { error } = await supabase.auth.updateUser({ password: pwForm.next });
               setChangingPw(false);
               if (error) { toast(error.message, 'error'); return; }
@@ -303,7 +330,7 @@ const Profile = () => {
               setPwOpen(false);
             }}
           >
-            {changingPw ? 'Updating…' : 'Update password'}
+            {changingPw ? 'Verifying…' : 'Update password'}
           </button>
         </div>
       )}
