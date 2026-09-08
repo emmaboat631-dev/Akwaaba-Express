@@ -74,7 +74,7 @@ export const DriverProvider = ({ children }) => {
           const today = todayISO();
           if (s.lastActiveDateISO === today) return s;
           const yesterdaysTrips = s.lastActiveDateISO
-            ? s.completedTrips.filter((t) => t.date.slice(0, 10) === s.lastActiveDateISO)
+            ? s.completedTrips.filter((t) => t.date?.slice(0, 10) === s.lastActiveDateISO)
             : [];
           const dailyHistory = s.lastActiveDateISO
             ? [
@@ -153,7 +153,7 @@ export const DriverProvider = ({ children }) => {
           return { ...s, onlineSince: null, onlineSecondsToday: s.onlineSecondsToday + elapsed };
         }),
     }),
-    [state],
+    [state, user],
   );
 
   return <DriverContext.Provider value={value}>{children}</DriverContext.Provider>;

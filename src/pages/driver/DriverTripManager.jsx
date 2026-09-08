@@ -47,6 +47,7 @@ const DriverTripManager = () => {
   });
 
   const fetchTrips = async () => {
+    if (!user?.id) return;
     setLoading(true);
     const { data } = await supabase
       .from('trips')
@@ -58,7 +59,7 @@ const DriverTripManager = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchTrips(); }, [user.id]);
+  useEffect(() => { if (user?.id) fetchTrips(); }, [user?.id]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 

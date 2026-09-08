@@ -205,10 +205,10 @@ const DriverScanTicket = () => {
           </div>
           <span className="badge badge-success" style={{ margin: '0 auto 12px', display: 'inline-flex' }}>Valid ticket</span>
           <div className="bold" style={{ fontSize: 18 }}>
-            {result.booking.passengers?.[0]?.name}
-            {result.booking.passengers.length > 1 ? ` +${result.booking.passengers.length - 1}` : ''}
+            {result.booking.passengers?.[0]?.name || 'Passenger'}
+            {(result.booking.passengers?.length || 0) > 1 ? ` +${result.booking.passengers.length - 1}` : ''}
           </div>
-          <div className="t-sm muted mb-3">Seat{result.booking.seats.length > 1 ? 's' : ''} {result.booking.seats.join(', ')}</div>
+          <div className="t-sm muted mb-3">Seat{(result.booking.seats?.length || 0) > 1 ? 's' : ''} {(result.booking.seats || []).join(', ')}</div>
           <div className="divider" style={{ margin: '14px 0' }} />
           <div className="flex justify-between t-sm mb-2"><span className="muted">Booking</span><span className="semibold">{result.booking.id}</span></div>
           <div className="flex justify-between t-sm"><span className="muted">Paid</span><span className="semibold">{formatCedi(result.booking.amount)}</span></div>

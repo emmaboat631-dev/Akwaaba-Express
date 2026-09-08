@@ -139,7 +139,7 @@ const DriverDashboard = () => {
   const to = cityById(trip.toId);
   const status = driver.getAssignedStatus(trip.id);
 
-  const todaysEntries = driver.completedTrips.filter((t) => t.date.slice(0, 10) === todayISO());
+  const todaysEntries = driver.completedTrips.filter((t) => t.date?.slice(0, 10) === todayISO());
   const todayEarnings = todaysEntries.reduce((sum, t) => sum + t.amount, 0);
   const todayKm = todaysEntries.reduce((sum, t) => sum + (t.distanceKm || 0), 0);
 
@@ -282,8 +282,8 @@ const DriverDashboard = () => {
         <div className="flex items-center gap-3 mb-3">
           <OperatorMark operator={operator} size={44} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="semibold t-sm">{operator.name} · {busType.name}</div>
-            <div className="t-xs muted">{from.name} → {to.name}</div>
+            <div className="semibold t-sm">{operator?.name || 'Operator'} · {busType?.name || 'Bus'}</div>
+            <div className="t-xs muted">{from?.name || trip.fromId} → {to?.name || trip.toId}</div>
           </div>
           <div className="text-right">
             <div className="bold t-num" style={{ fontSize: 16 }}>{minutesToClock(trip.departMins)}</div>

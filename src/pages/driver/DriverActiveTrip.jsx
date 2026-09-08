@@ -29,14 +29,13 @@ const DriverActiveTrip = () => {
   const driver = useDriver();
   const hail = useDriverHail();
   const toast = useToast();
-  const [arrived, setArrived] = useState(false); // hail-only sub-phase, not persisted
+  const [arrived, setArrived] = useState(false);
+  const [routeLine, setRouteLine] = useState(null);
 
   const isHail = !!requestId;
   const trip = !isHail ? findAssignedTripById(tripId) : null;
   const request = isHail ? hail.activeRequest : null;
 
-  // If the passenger cancels while the driver is en route, tear the trip
-  // down cleanly and bounce back to the dashboard.
   useEffect(() => {
     if (!isHail) return undefined;
     return relay.onMessage((m) => {
@@ -47,6 +46,23 @@ const DriverActiveTrip = () => {
       }
     });
   }, [isHail, requestId, hail, navigate, toast]);
+
+  const operator = trip ? operatorById(trip.operatorId) : null;
+  const busType = trip ? busTypeById(trip.busTypeId) : null;
+  const from = trip ? cityById(trip.fromId) : null;
+  const to = trip ? cityById(trip.toId) : null;
+
+  useEffect(() => {
+    let cancelled = false;
+    if (isHail) {
+      if (position && request?.pickup) {
+        getRoute(position, request.pickup).then((r) => { if (!cancelled) setRouteLine(r); });
+      }
+    } else if (from && to) {
+      getRoute([from.lat, from.lng], [to.lat, to.lng]).then((r) => { if (!cancelled) setRouteLine(r); });
+    }
+    return () => { cancelled = true; };
+  }, [isHail, from?.lat, from?.lng, to?.lat, to?.lng, position?.[0], position?.[1], request?.pickup?.[0], request?.pickup?.[1]]);
 
   if ((isHail && !request) || (!isHail && !trip)) {
     return (
@@ -59,22 +75,6 @@ const DriverActiveTrip = () => {
       </div>
     );
   }
-
-  const operator = trip ? operatorById(trip.operatorId) : null;
-  const busType = trip ? busTypeById(trip.busTypeId) : null;
-  const from = trip ? cityById(trip.fromId) : null;
-  const to = trip ? cityById(trip.toId) : null;
-
-  const [routeLine, setRouteLine] = useState(null);
-  useEffect(() => {
-    if (isHail) {
-      if (position && request.pickup) {
-        getRoute(position, request.pickup).then(setRouteLine);
-      }
-    } else if (from && to) {
-      getRoute([from.lat, from.lng], [to.lat, to.lng]).then(setRouteLine);
-    }
-  }, [isHail, from?.lat, to?.lat, position?.[0], request?.pickup?.[0]]);
 
   const complete = async () => {
     if (isHail) {
@@ -127,8 +127,8 @@ const DriverActiveTrip = () => {
             <div className="flex items-center gap-3 mb-4">
               <OperatorMark operator={operator} size={48} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="semibold">{operator.name} · {busType.name}</div>
-                <div className="t-xs muted">{from.name} → {to.name} · Plate {trip.plate}</div>
+                <div className="semibold">{operator?.name || 'Operator'} · {busType?.name || 'Bus'}</div>
+                <div className="t-xs muted">{from?.name || trip.fromId} → {to?.name || trip.toId} · Plate {trip.plate}</div>
               </div>
               <span className="badge badge-primary">{minutesToClock(trip.departMins)}</span>
             </div>

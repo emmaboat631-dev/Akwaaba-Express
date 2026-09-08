@@ -60,7 +60,6 @@ const DriverManifest = () => {
 
   useEffect(() => { fetchPassengers(); }, [fetchPassengers]);
 
-  const manifest = isRealTrip ? realPassengers : generateManifest(trip);
   const [localBoarded, setLocalBoarded] = useState(() => new Set());
 
   if (!isRealTrip && !trip) {
@@ -71,6 +70,8 @@ const DriverManifest = () => {
       </div>
     );
   }
+
+  const manifest = isRealTrip ? realPassengers : generateManifest(trip);
 
   const from = isRealTrip
     ? cityById(realTripInfo?.from_id)
