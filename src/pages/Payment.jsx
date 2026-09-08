@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Smartphone, Check, Bus } from 'lucide-react';
+import { CreditCard, Smartphone, Check, Bus, ShieldCheck, CheckCircle, ArrowRight } from 'lucide-react';
 
 import { useBooking } from '../context/BookingContext';
 import { useAuth } from '../context/AuthContext';
@@ -50,6 +50,7 @@ const Payment = () => {
 
   const [selected, setSelected] = useState(methods[0]?.id || null);
   const [paying, setPaying] = useState(false);
+  const [confirmed, setConfirmed] = useState(null);
 
   if (!trip) {
     return (
@@ -69,9 +70,8 @@ const Payment = () => {
       addBooking(booking);
       relay.send('booking:new', { booking });
       reset();
-      toast('Payment successful', 'success');
       notifyBookingConfirmed(routeLabel, total);
-      navigate(`/ticket/${booking.id}`, { replace: true });
+      setConfirmed(booking);
     } catch {
       toast('Booking failed after payment — contact support', 'error');
       setPaying(false);
@@ -109,6 +109,33 @@ const Payment = () => {
 
   const routeLabel = isLive ? trip.routeName : `${cityById(trip.fromId)?.name} → ${cityById(trip.toId)?.name}`;
   const operator = operatorById(trip.operatorId);
+
+  if (confirmed) {
+    return (
+      <div className="screen fade-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '40px 24px' }}>
+        <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--green-bg, rgba(34,197,94,0.12))', color: 'var(--green, #22c55e)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+          <CheckCircle size={44} />
+        </div>
+        <h1 style={{ fontSize: 26, marginBottom: 8 }}>Booking Confirmed!</h1>
+        <p className="muted" style={{ marginBottom: 24, maxWidth: 280 }}>
+          Your {qty} seat{qty === 1 ? '' : 's'} on {routeLabel} {qty === 1 ? 'has' : 'have'} been booked successfully.
+        </p>
+
+        <div className="card" style={{ width: '100%', maxWidth: 320, padding: 16, marginBottom: 32 }}>
+          <div className="flex justify-between t-sm mb-2"><span className="muted">Amount paid</span><span className="semibold">{formatCedi(total)}</span></div>
+          <div className="flex justify-between t-sm mb-2"><span className="muted">Booking ID</span><span className="semibold" style={{ fontFamily: 'monospace', fontSize: 12 }}>{confirmed.id?.slice(0, 8).toUpperCase()}</span></div>
+          <div className="flex justify-between t-sm"><span className="muted">Status</span><span className="badge badge-success" style={{ fontSize: 11 }}>Confirmed</span></div>
+        </div>
+
+        <button className="btn btn-primary" style={{ maxWidth: 320 }} onClick={() => navigate(`/ticket/${confirmed.id}`, { replace: true })}>
+          View Ticket <ArrowRight size={16} />
+        </button>
+        <button className="btn btn-ghost mt-3" style={{ maxWidth: 320 }} onClick={() => navigate('/', { replace: true })}>
+          Back to Home
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="screen fade-up">

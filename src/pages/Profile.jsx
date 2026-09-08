@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
   Pencil, Check, LogOut, Home, Briefcase, MapPin, Plus, Trash2,
-  Smartphone, CreditCard, Bell, Moon, Star, Lock,
+  Smartphone, CreditCard, Bell, Moon, Star, Lock, Eye, EyeOff, KeyRound,
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 import { useAuth } from '../context/AuthContext';
 import { useTrips } from '../context/TripsContext';
@@ -31,7 +32,11 @@ const Profile = () => {
   const [form, setForm] = useState({ name: user?.name || '', phone: user?.phone || '', ghanaCard: '' });
   const [place, setPlace] = useState(null); // { label, address } | null
   const [payForm, setPayForm] = useState(null); // { type, number, expiry } | null
-  const [settings, setSettings] = useState({ notify: notifEnabled(), email: false });
+  const [settings, setSettings] = useState({ notify: notifEnabled(), email: localStorage.getItem('akw_email_updates') === 'true' });
+  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
+  const [showPw, setShowPw] = useState(false);
+  const [changingPw, setChangingPw] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
 
   if (!user) return null;
 
@@ -131,6 +136,13 @@ const Profile = () => {
         <button className="t-sm semibold" style={{ color: 'var(--primary-dark)' }} onClick={() => setPlace({ label: '', address: '' })}><Plus size={14} /> Add</button>
       </div>
       <div className="card mb-4" style={{ padding: 6 }}>
+        {user.savedPlaces.length === 0 && !place && (
+          <div className="flex flex-col items-center gap-2" style={{ padding: '24px 16px', textAlign: 'center' }}>
+            <MapPin size={28} className="muted" style={{ opacity: 0.4 }} />
+            <span className="t-sm muted">No saved places yet</span>
+            <span className="t-xs muted" style={{ opacity: 0.7 }}>Add home, work, or favourite stops for faster booking</span>
+          </div>
+        )}
         {user.savedPlaces.map((p) => {
           const Icon = PLACE_ICONS[p.icon] || MapPin;
           return (
@@ -162,6 +174,13 @@ const Profile = () => {
         <button className="t-sm semibold" style={{ color: 'var(--primary-dark)' }} onClick={() => setPayForm(payForm ? null : { type: 'momo', number: '', expiry: '' })}><Plus size={14} /> Add</button>
       </div>
       <div className="card mb-4" style={{ padding: 6 }}>
+        {user.paymentMethods.length === 0 && !payForm && (
+          <div className="flex flex-col items-center gap-2" style={{ padding: '24px 16px', textAlign: 'center' }}>
+            <CreditCard size={28} className="muted" style={{ opacity: 0.4 }} />
+            <span className="t-sm muted">No payment methods saved</span>
+            <span className="t-xs muted" style={{ opacity: 0.7 }}>Add mobile money or card for quicker checkout</span>
+          </div>
+        )}
         {user.paymentMethods.map((m) => {
           const Icon = m.type === 'card' ? CreditCard : Smartphone;
           return (
@@ -220,7 +239,12 @@ const Profile = () => {
             setNotifEnabled(next);
             setSettings((s) => ({ ...s, notify: next }));
             toast(next ? 'Notifications enabled' : 'Notifications disabled', 'info');
-          } : () => setSettings((s) => ({ ...s, [key]: !s[key] }));
+          } : () => {
+            const next = !settings.email;
+            localStorage.setItem('akw_email_updates', String(next));
+            setSettings((s) => ({ ...s, email: next }));
+            toast(next ? 'Email updates enabled' : 'Email updates disabled', 'info');
+          };
           return (
             <div key={key} className="flex items-center gap-3" style={{ padding: 12 }}>
               <div style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--surface-2)', color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={17} /></div>
@@ -230,6 +254,59 @@ const Profile = () => {
           );
         })}
       </div>
+
+      {/* Change password */}
+      <div className="flex justify-between items-center mb-2">
+        <h3>Security</h3>
+        <button className="t-sm semibold" style={{ color: 'var(--primary-dark)' }} onClick={() => setPwOpen(!pwOpen)}>
+          <KeyRound size={14} /> {pwOpen ? 'Cancel' : 'Change password'}
+        </button>
+      </div>
+      {pwOpen && (
+        <div className="card mb-4" style={{ padding: 16 }}>
+          <div className="field-label">New password</div>
+          <div className="field mb-3">
+            <Lock size={18} className="muted" />
+            <input
+              type={showPw ? 'text' : 'password'}
+              placeholder="At least 6 characters"
+              value={pwForm.next}
+              onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })}
+              style={{ flex: 1, minWidth: 0 }}
+            />
+            <button type="button" className="muted" onClick={() => setShowPw((v) => !v)}>
+              {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          <div className="field-label">Confirm new password</div>
+          <div className="field mb-3">
+            <Lock size={18} className="muted" />
+            <input
+              type={showPw ? 'text' : 'password'}
+              placeholder="Repeat password"
+              value={pwForm.confirm}
+              onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
+            />
+          </div>
+          <button
+            className="btn btn-primary btn-sm"
+            disabled={changingPw}
+            onClick={async () => {
+              if (pwForm.next.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
+              if (pwForm.next !== pwForm.confirm) { toast('Passwords do not match', 'error'); return; }
+              setChangingPw(true);
+              const { error } = await supabase.auth.updateUser({ password: pwForm.next });
+              setChangingPw(false);
+              if (error) { toast(error.message, 'error'); return; }
+              toast('Password updated successfully', 'success');
+              setPwForm({ current: '', next: '', confirm: '' });
+              setPwOpen(false);
+            }}
+          >
+            {changingPw ? 'Updating…' : 'Update password'}
+          </button>
+        </div>
+      )}
 
       <button className="btn btn-outline mb-4" style={{ color: 'var(--red)', borderColor: 'rgba(206,17,38,0.25)' }} onClick={() => { logout(); navigate('/welcome', { replace: true }); }}>
         <LogOut size={18} /> Log out
