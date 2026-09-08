@@ -168,9 +168,9 @@ The app uses CSS custom properties defined in `src/index.css`:
 
 ## Authors
 
-- **Emmanuel Boateng** — Developer & Designer
+- **Nimako-Boateng Emmanuel** — Developer & Designer
 - **Joseph Engmann** — Developer & Designer
-- **Prince Gebu** — Developer & Designer
+- **Prince Emmanuel Elorm Gebu** — Developer & Designer
 
 ## License
 
