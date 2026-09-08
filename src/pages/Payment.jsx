@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Smartphone, Check, Bus, ShieldCheck } from 'lucide-react';
+import { CreditCard, Smartphone, Check, Bus } from 'lucide-react';
 
 import { useBooking } from '../context/BookingContext';
 import { useAuth } from '../context/AuthContext';
@@ -50,15 +50,6 @@ const Payment = () => {
 
   const [selected, setSelected] = useState(methods[0]?.id || null);
   const [paying, setPaying] = useState(false);
-
-  if (user?.isGuest) {
-    return (
-      <div className="screen">
-        <Header title="Payment" />
-        <EmptyState icon={ShieldCheck} title="Sign in to pay" subtitle="Guest accounts cannot make payments. Create an account or sign in to complete your booking." action={<button className="btn btn-primary btn-sm" onClick={() => navigate('/signup')}>Create account</button>} />
-      </div>
-    );
-  }
 
   if (!trip) {
     return (

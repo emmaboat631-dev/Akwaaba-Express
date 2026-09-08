@@ -57,7 +57,6 @@ const AdminUsers = () => {
                   <th>Email</th>
                   <th>Phone</th>
                   <th>Role</th>
-                  <th>Guest</th>
                   <th>Joined</th>
                 </tr>
               </thead>
@@ -68,7 +67,6 @@ const AdminUsers = () => {
                     <td>{u.email || '—'}</td>
                     <td>{u.phone || '—'}</td>
                     <td><span className={`adm-pill ${u.role}`}>{u.role}</span></td>
-                    <td>{u.is_guest ? 'Yes' : 'No'}</td>
                     <td className="adm-dim">{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
                   </tr>
                 ))}

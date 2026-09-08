@@ -12,7 +12,7 @@ import { uid } from '../utils/random';
 import Header from '../components/Header';
 import EmptyState from '../components/EmptyState';
 import Avatar from '../components/Avatar';
-import PhoneInput, { isValidGhPhone } from '../components/PhoneInput';
+import PhoneInput from '../components/PhoneInput';
 import { isValidGhanaCard } from '../utils/format';
 
 const blank = { name: '', phone: '', idNo: '' };
@@ -29,8 +29,6 @@ const Passengers = () => {
   const seatCount = draft.seats?.length || 0;
   const maxLive = trip?.seatsAvailable || 4;
 
-  // Guests skipped signup — they must fill in their own details before paying.
-  const isGuest = !!user?.isGuest;
   // A live bus coming from the relay carries a real driver on another device,
   // who must accept the trip before the passenger can pay.
   const relayDriverId = isLive ? trip?.driverId : null;
@@ -39,12 +37,12 @@ const Passengers = () => {
   // editable in place. Full forms are only asked for the extra riders.
   const [booker, setBooker] = useState(() => ({
     ...blank,
-    name: user?.name && user.name !== 'Guest' ? user.name : '',
+    name: user?.name || '',
     phone: user?.phone || '',
     idNo: user?.ghanaCard || '',
     ...(draft.passengers?.[0] || {}),
   }));
-  const [editingBooker, setEditingBooker] = useState(isGuest); // opened by default for guests
+  const [editingBooker, setEditingBooker] = useState(false);
   const [hailing, setHailing] = useState(null); // { requestId } while awaiting driver acceptance
   const [extras, setExtras] = useState(() => {
     const count = isLive
@@ -73,13 +71,11 @@ const Passengers = () => {
       return p.slice(0, next);
     });
 
-  const bookerPhoneOk = isValidGhPhone(booker.phone);
   const valid = useMemo(
     () =>
       booker.name.trim().length > 1 &&
-      (!isGuest || bookerPhoneOk) && // guests must supply a phone too
       extras.every((p) => p.name.trim().length > 1),
-    [booker, extras, isGuest, bookerPhoneOk],
+    [booker, extras],
   );
 
   // While waiting on the driver, listen for their accept/decline; time out if
@@ -106,7 +102,7 @@ const Passengers = () => {
 
   const proceed = () => {
     if (!valid) {
-      toast(isGuest ? 'Enter your name and phone to continue' : "Add each passenger's name", 'error');
+      toast("Add each passenger's name", 'error');
       setEditingBooker(true);
       return;
     }
@@ -188,7 +184,7 @@ const Passengers = () => {
             <div className="field mb-3"><input autoFocus placeholder="e.g. Kwesi Boateng" value={booker.name} onChange={setBookerField('name')} /></div>
             <div className="flex gap-3">
               <div style={{ flex: 1 }}>
-                <div className="field-label">Phone{isGuest ? ' (required)' : ''}</div>
+                <div className="field-label">Phone</div>
                 <div className="field"><PhoneInput value={booker.phone} onChange={(digits) => setBooker((b) => ({ ...b, phone: digits }))} /></div>
               </div>
               <div style={{ flex: 1 }}>

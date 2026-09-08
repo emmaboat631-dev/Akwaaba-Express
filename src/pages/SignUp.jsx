@@ -11,25 +11,13 @@ import { GoogleIcon, AppleIcon } from '../components/BrandIcons';
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const { signInAsGuest, isAuthed } = useAuth();
+  const { isAuthed } = useAuth();
   const toast = useToast();
 
   const [role, setRole] = useState('passenger');
   const [form, setForm] = useState({ first: '', last: '', email: '', phone: '', password: '', confirm: '' });
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
-
-  const guest = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await signInAsGuest();
-      navigate('/', { replace: true });
-    } catch (err) {
-      toast(err.message || 'Guest sign-in failed — enable Anonymous provider in Supabase.', 'error');
-      setBusy(false);
-    }
-  };
 
   const driver = role === 'driver';
   const copy = driver
@@ -88,11 +76,6 @@ const SignUp = () => {
     <div className="screen fade-up">
       <div className="header">
         <button className="icon-btn" onClick={() => navigate('/signin')}><ArrowLeft size={20} /></button>
-        {/* Guest sign-in is passenger-only — a driver account needs real
-            license/vehicle info, so we hide Skip entirely when Driver is picked. */}
-        {role === 'passenger' && (
-          <button className="t-sm semibold muted" onClick={guest} disabled={busy}>Skip</button>
-        )}
       </div>
 
       <h1 className="mb-1">Create your account</h1>

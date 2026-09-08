@@ -14,7 +14,6 @@ const profileFromRow = (row) => row && ({
   name: row.name,
   phone: row.phone || '',
   email: row.email || '',
-  isGuest: !!row.is_guest,
   regNo: row.reg_no,
   ghanaCard: row.ghana_card || '',
   avatarColor: row.avatar_color || '#06392F',
@@ -151,26 +150,12 @@ export const AuthProvider = ({ children }) => {
       isAuthed: !!user,
       loading,
 
-      // Guest sign-in — Supabase Anonymous provider must be enabled in the
-      // dashboard (Auth → Providers → Anonymous Sign-Ins). The metadata below
-      // flows into raw_user_meta_data and the handle_new_user trigger uses it
-      // to set the profile's name/role/is_guest fields on first insert.
-      signInAsGuest: async () => {
-        const { data, error } = await supabase.auth.signInAnonymously({
-          options: {
-            data: { name: 'Guest', role: 'passenger', is_guest: true },
-          },
-        });
-        if (error) throw error;
-        return data.user;
-      },
-
       logout: async () => {
         await supabase.auth.signOut();
       },
 
       // Accepts a camelCase patch. Fields not in CLIENT_TO_DB (id, role,
-      // email, regNo, isGuest, joinedISO, rating) are silently ignored —
+      // email, regNo, joinedISO, rating) are silently ignored —
       // server-owned. Ghana Card is set-once: once the profile has one,
       // further attempts to change it are dropped.
       updateUser: async (patch) => {
