@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Check, Star, Clock } from 'lucide-react';
+import { Check, Star, Clock, Bus } from 'lucide-react';
 
 import { api } from '../services/api';
 import { useBooking } from '../context/BookingContext';
@@ -10,6 +10,7 @@ import { formatCedi, formatMinutes, minutesToClock } from '../utils/format';
 
 import Header from '../components/Header';
 import OperatorMark from '../components/OperatorMark';
+import EmptyState from '../components/EmptyState';
 import { SkeletonLine } from '../components/Skeleton';
 
 const TripDetails = () => {
@@ -19,10 +20,24 @@ const TripDetails = () => {
   const { startBooking } = useBooking();
 
   const [trip, setTrip] = useState(state?.trip || null);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!trip) api.getTrip(tripId).then(setTrip);
+    if (!trip) {
+      api.getTrip(tripId)
+        .then((t) => { if (t) setTrip(t); else setNotFound(true); })
+        .catch(() => setNotFound(true));
+    }
   }, [trip, tripId]);
+
+  if (notFound) {
+    return (
+      <div className="screen fade-up">
+        <Header title="Trip details" />
+        <EmptyState icon={Bus} title="Trip not found" message="This trip may have been removed or is no longer available." action={<button className="btn btn-primary btn-sm" onClick={() => navigate('/')}>Find a bus</button>} />
+      </div>
+    );
+  }
 
   if (!trip) {
     return (
@@ -59,10 +74,10 @@ const TripDetails = () => {
         <div className="flex items-center gap-3 mb-4">
           <OperatorMark operator={operator} size={46} />
           <div style={{ flex: 1 }}>
-            <div className="semibold">{operator.name}</div>
-            <div className="t-xs muted flex items-center gap-1"><Star size={11} fill="#F4C430" stroke="#F4C430" /> {operator.rating} · {trip.plate}</div>
+            <div className="semibold">{operator?.name || 'Operator'}</div>
+            <div className="t-xs muted flex items-center gap-1"><Star size={11} fill="#F4C430" stroke="#F4C430" /> {operator?.rating || '—'} · {trip.plate}</div>
           </div>
-          <span className="badge badge-primary">{busType.name}</span>
+          <span className="badge badge-primary">{busType?.name || 'Bus'}</span>
         </div>
 
         {/* Route timeline */}
@@ -76,14 +91,14 @@ const TripDetails = () => {
             <div className="flex justify-between items-center" style={{ marginBottom: 'auto' }}>
               <div>
                 <div className="bold" style={{ fontSize: 18 }}>{minutesToClock(trip.departMins)}</div>
-                <div className="t-sm muted">{from.name} · {from.region}</div>
+                <div className="t-sm muted">{from?.name} · {from?.region}</div>
               </div>
             </div>
             <div className="t-xs muted flex items-center gap-1" style={{ margin: '14px 0' }}><Clock size={12} /> {formatMinutes(trip.durationMins)} · {trip.distanceKm} km</div>
             <div className="flex justify-between items-center">
               <div>
                 <div className="bold" style={{ fontSize: 18 }}>{minutesToClock(trip.arriveMins)}</div>
-                <div className="t-sm muted">{to.name} · {to.region}</div>
+                <div className="t-sm muted">{to?.name} · {to?.region}</div>
               </div>
             </div>
           </div>
@@ -93,7 +108,7 @@ const TripDetails = () => {
       <div className="card mb-4">
         <div className="semibold mb-3">Onboard amenities</div>
         <div className="flex flex-col gap-2">
-          {busType.amenities.map((a) => (
+          {(busType?.amenities || []).map((a) => (
             <div key={a} className="flex items-center gap-2 t-sm">
               <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--success-light)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check size={13} /></div>
               {a}

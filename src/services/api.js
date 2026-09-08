@@ -193,6 +193,7 @@ export const api = {
     return {
       ...draft,
       id: booking.id,
+      amount: draft.breakdown.total,
       status: 'confirmed',
       qrValue: `${window.location.origin}/ticket/${booking.id}`,
       createdAt: booking.created_at,

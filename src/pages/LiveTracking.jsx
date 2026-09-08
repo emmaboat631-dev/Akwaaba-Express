@@ -58,7 +58,7 @@ const LiveTracking = () => {
     if (bus?.origin && position) {
       getRoute(bus.origin, position).then(setRoadRoute);
     }
-  }, [bus?.origin?.[0], position?.[0]]);
+  }, [bus?.origin?.[0], bus?.origin?.[1], position?.[0], position?.[1]]);
 
   if (!bus) {
     return (

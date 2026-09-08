@@ -38,7 +38,7 @@ const isPast = (b) => b.status === 'cancelled' || (b.type === 'scheduled' && b.t
 
 const BookingRow = ({ booking, onOpen, onCancel, countdown }) => {
   const { trip } = booking;
-  const operator = operatorById(trip.operatorId);
+  const operator = operatorById(trip?.operatorId);
   const isLive = booking.type === 'live';
   const route = isLive ? trip.routeName : `${cityById(trip.fromId)?.name} → ${cityById(trip.toId)?.name}`;
   const when = isLive ? format(new Date(booking.createdAt), 'd MMM') : `${format(new Date(trip.dateISO), 'd MMM')} · ${minutesToClock(trip.departMins)}`;

@@ -140,7 +140,7 @@ const Ticket = () => {
   const isLive = booking.type === 'live';
   const operator = operatorById(trip.operatorId);
   const busType = busTypeById(trip.busTypeId);
-  const primary = booking.passengers[0];
+  const primary = booking.passengers?.[0];
   const isConfirmed = booking.status === 'confirmed';
 
   const fromCity = !isLive ? cityById(trip.fromId) : null;
@@ -153,7 +153,7 @@ const Ticket = () => {
   const arriveLabel = isLive ? `~${trip.etaMin}m` : minutesToClock(trip.arriveMins);
 
   const seatsLabel = booking.seats.join(', ');
-  const passengerName = primary?.name + (booking.passengers.length > 1 ? ` +${booking.passengers.length - 1}` : '');
+  const passengerName = (primary?.name || 'Passenger') + (booking.passengers.length > 1 ? ` +${booking.passengers.length - 1}` : '');
   const dateLabel = isLive
     ? format(new Date(booking.createdAt), 'd MMM yyyy')
     : format(new Date(trip.dateISO), 'd MMM yyyy');
@@ -277,8 +277,8 @@ const Ticket = () => {
 
           <div style={{ marginTop: 16 }}>
             <PillRow>
-              <Pill label="Operator" value={operator.name.split(' ')[0]} />
-              <Pill label={isLive ? 'Type' : 'Class'} value={busType.name} />
+              <Pill label="Operator" value={(operator?.name || 'Operator').split(' ')[0]} />
+              <Pill label={isLive ? 'Type' : 'Class'} value={busType?.name || 'Bus'} />
               <Pill label="Group" value={String.fromCharCode(65 + (booking.id.charCodeAt(2) % 4))} />
             </PillRow>
             <PillRow>

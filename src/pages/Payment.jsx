@@ -52,7 +52,7 @@ const Payment = () => {
   const [paying, setPaying] = useState(false);
   const [confirmed, setConfirmed] = useState(null);
 
-  if (!trip) {
+  if (!trip && !confirmed) {
     return (
       <div className="screen">
         <Header title="Payment" />

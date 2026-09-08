@@ -40,6 +40,8 @@ const Search = () => {
     setLoading(true);
     api.searchTrips({ fromId, toId, dateISO }).then((res) => {
       if (active) { setTrips(res); setLoading(false); }
+    }).catch(() => {
+      if (active) { setTrips([]); setLoading(false); }
     });
     return () => { active = false; };
   }, [fromId, toId, dateISO]);

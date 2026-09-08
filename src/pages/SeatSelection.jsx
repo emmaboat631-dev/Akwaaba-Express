@@ -15,7 +15,7 @@ const SeatSelection = () => {
   const { draft, setSeats } = useBooking();
   const trip = draft.trip;
   // One seat per passenger (never more than the seats still free).
-  const freeSeats = trip ? trip.seatsTotal - trip.seatsTaken.length : 1;
+  const freeSeats = trip ? trip.seatsTotal - (trip.seatsTaken?.length || 0) : 1;
   const pax = Math.max(1, Math.min(draft.pax || 1, freeSeats));
   const [selected, setSelected] = useState(() => (draft.seats || []).slice(0, pax));
 

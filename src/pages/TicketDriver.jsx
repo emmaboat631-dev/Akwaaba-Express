@@ -46,7 +46,7 @@ const TicketDriver = () => {
   }
 
   const trip = booking.trip;
-  const operator = operatorById(trip.operatorId);
+  const operator = operatorById(trip?.operatorId);
   const driverInfo = driverInfoFor(trip);
   const telHref = driverInfo.phone ? `tel:${driverInfo.phone.replace(/\s+/g, '')}` : null;
   const smsHref = driverInfo.phone ? `sms:${driverInfo.phone.replace(/\s+/g, '')}` : null;
