@@ -4,6 +4,7 @@ import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { GoogleIcon, AppleIcon } from '../components/BrandIcons';
+import { OAUTH_REDIRECT } from '../services/deepLink';
 import { supabase } from '../lib/supabase';
 
 const SignIn = () => {
@@ -143,7 +144,7 @@ const SignIn = () => {
           setIsSubmitting(true);
           const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: window.location.origin },
+            options: { redirectTo: OAUTH_REDIRECT },
           });
           if (error) { toast(error.message, 'error'); setIsSubmitting(false); }
         }}>
@@ -153,7 +154,7 @@ const SignIn = () => {
           setIsSubmitting(true);
           const { error } = await supabase.auth.signInWithOAuth({
             provider: 'apple',
-            options: { redirectTo: window.location.origin },
+            options: { redirectTo: OAUTH_REDIRECT },
           });
           if (error) { toast(error.message, 'error'); setIsSubmitting(false); }
         }}>

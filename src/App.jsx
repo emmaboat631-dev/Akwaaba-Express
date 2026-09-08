@@ -15,6 +15,7 @@ import RelayNotifications from './components/RelayNotifications';
 import { requestPermission } from './services/notifications';
 import OfflineBanner from './components/OfflineBanner';
 import OfflineGate from './components/OfflineGate';
+import { setupDeepLinkListener } from './services/deepLink';
 
 import Welcome from './pages/Welcome';
 import SignIn from './pages/SignIn';
@@ -193,6 +194,8 @@ const AppRoutes = () => {
 
   return <Shell />;
 };
+
+setupDeepLinkListener();
 
 const App = () => (
   <ThemeProvider>

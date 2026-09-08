@@ -8,6 +8,7 @@ import PasswordChecklist, { passwordMeetsRules } from '../components/PasswordChe
 import { supabase } from '../lib/supabase';
 import PhoneInput, { isValidGhPhone } from '../components/PhoneInput';
 import { GoogleIcon, AppleIcon } from '../components/BrandIcons';
+import { OAUTH_REDIRECT } from '../services/deepLink';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -151,7 +152,7 @@ const SignUp = () => {
           setBusy(true);
           const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: window.location.origin },
+            options: { redirectTo: OAUTH_REDIRECT },
           });
           if (error) { toast(error.message, 'error'); setBusy(false); }
         }}>
@@ -161,7 +162,7 @@ const SignUp = () => {
           setBusy(true);
           const { error } = await supabase.auth.signInWithOAuth({
             provider: 'apple',
-            options: { redirectTo: window.location.origin },
+            options: { redirectTo: OAUTH_REDIRECT },
           });
           if (error) { toast(error.message, 'error'); setBusy(false); }
         }}>
