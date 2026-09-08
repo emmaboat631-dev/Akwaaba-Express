@@ -93,7 +93,8 @@ export const DriverProvider = ({ children }) => {
       startTrip: (tripId) => {
         setState((s) => ({ ...s, assignedTripId: tripId, assignedTripStatus: 'in-progress' }));
         if (!tripId.startsWith('assign__')) {
-          supabase.from('trips').update({ status: 'in_progress' }).eq('id', tripId).then();
+          supabase.from('trips').update({ status: 'in_progress' }).eq('id', tripId)
+            .then(({ error }) => { if (error) console.error('Failed to update trip status:', error.message); });
         }
       },
 
@@ -114,7 +115,7 @@ export const DriverProvider = ({ children }) => {
             type: 'scheduled',
             amount: trip.earningsAmount || 0,
             distance_km: trip.distanceKm || 0,
-          }]).then();
+          }]).then(({ error }) => { if (error) console.error('Failed to save trip completion:', error.message); });
         }
       },
 
@@ -133,7 +134,7 @@ export const DriverProvider = ({ children }) => {
             type: 'live',
             amount: request.fareEstimate || 0,
             distance_km: request.distanceKm || 0,
-          }]).then();
+          }]).then(({ error }) => { if (error) console.error('Failed to save hail completion:', error.message); });
         }
       },
 

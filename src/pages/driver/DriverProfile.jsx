@@ -37,7 +37,9 @@ const DriverProfile = () => {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: user?.name || '', phone: user?.phone || '' });
   const [payForm, setPayForm] = useState(null);
-  const [settings, setSettings] = useState({ notify: true });
+  const [settings, setSettings] = useState(() => ({
+    notify: localStorage.getItem('akw_driver_notify') !== 'false',
+  }));
 
   const operator = user?.operatorId ? operatorById(user.operatorId) : null;
   const busType = user?.busTypeId ? busTypeById(user.busTypeId) : null;
@@ -102,7 +104,7 @@ const DriverProfile = () => {
 
         <div className="flex flex-col gap-2">
           <InfoRow label="Email" value={user.email || 'Not added'} locked />
-          <InfoRow label="Registration no." value={user.regNo} locked />
+          {user.vehiclePlate && <InfoRow label="Plate no." value={user.vehiclePlate} locked />}
           <InfoRow label="Member since" value={user.joinedISO ? format(new Date(user.joinedISO), 'MMMM yyyy') : '—'} />
         </div>
       </div>
@@ -203,7 +205,14 @@ const DriverProfile = () => {
           { key: 'notify', label: 'Push notifications', icon: Bell },
         ].map(({ key, label, icon: Icon }) => {
           const on = key === 'dark' ? isDark : settings[key];
-          const handle = key === 'dark' ? toggleTheme : () => setSettings((s) => ({ ...s, [key]: !s[key] }));
+          const handle = key === 'dark' ? toggleTheme : () => {
+            setSettings((s) => {
+              const next = { ...s, [key]: !s[key] };
+              localStorage.setItem(`akw_driver_${key}`, String(next[key]));
+              return next;
+            });
+            toast(!settings[key] ? 'Notifications enabled' : 'Notifications disabled', 'info');
+          };
           return (
             <div key={key} className="flex items-center gap-3" style={{ padding: 12 }}>
               <div style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--surface-2)', color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={17} /></div>

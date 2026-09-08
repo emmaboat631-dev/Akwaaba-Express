@@ -292,7 +292,7 @@ const DriverTripManager = () => {
               </div>
               <div className="semibold mb-1">Cancel this trip?</div>
               <p className="t-xs muted mb-4">
-                {from?.name} to {to?.name} on {format(new Date(confirmCancel.travel_date + 'T00:00:00'), 'd MMM yyyy')}. Passengers with bookings will be notified.
+                {from?.name} to {to?.name} on {format(new Date(confirmCancel.travel_date + 'T00:00:00'), 'd MMM yyyy')}. This action cannot be undone.
               </p>
               <div className="flex gap-3">
                 <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setConfirmCancel(null)}>Keep trip</button>

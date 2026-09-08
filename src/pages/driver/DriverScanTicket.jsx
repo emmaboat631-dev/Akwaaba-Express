@@ -86,7 +86,8 @@ const DriverScanTicket = () => {
 
   const [manualMode, setManualMode] = useState(false);
   const [manualCode, setManualCode] = useState('');
-  const [result, setResult] = useState(null); // { status, booking?, id?, ...ctx }
+  const [result, setResult] = useState(null);
+  const [lastScannedId, setLastScannedId] = useState(null);
 
   // The trip the driver is currently supposed to be running. From the manifest
   // it comes via ?tripId=; from the dashboard it's derived from the driver's
@@ -105,7 +106,8 @@ const DriverScanTicket = () => {
 
   const lookup = (text) => {
     const id = extractBookingId(text);
-    if (!id) return;
+    if (!id || id === lastScannedId) return;
+    setLastScannedId(id);
     const booking = getBooking(id) || relay.getBooking(id);
     if (!booking) { 
       playScanError();
@@ -121,7 +123,7 @@ const DriverScanTicket = () => {
     setResult({ ...verdict, booking });
   };
 
-  const scanAgain = () => { setResult(null); setManualCode(''); };
+  const scanAgain = () => { setResult(null); setManualCode(''); setLastScannedId(null); };
 
   const checkIn = () => {
     const primary = result.booking.passengers?.[0];
