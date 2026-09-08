@@ -13,11 +13,16 @@ export const adminApi = {
       .filter((b) => b.status === 'confirmed')
       .reduce((sum, b) => sum + Number(b.amount || 0), 0);
 
+    const confirmed = bookingRows.filter((b) => b.status === 'confirmed').length;
+    const cancelled = bookingRows.filter((b) => b.status === 'cancelled').length;
+    const completed = bookingRows.filter((b) => b.status === 'completed').length;
+
     return {
       totalUsers: users.count || 0,
       totalBookings: bookings.count || 0,
       totalTrips: trips.count || 0,
       revenue,
+      statusBreakdown: { confirmed, cancelled, completed },
     };
   },
 

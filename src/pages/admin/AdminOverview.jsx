@@ -155,15 +155,31 @@ const AdminOverview = () => {
     return (
       <div className="adm-page">
         <h1 className="adm-title">Dashboard</h1>
-        <div className="adm-loader">Loading dashboard...</div>
+        <p className="adm-subtitle">Akwaaba Express operations overview</p>
+        <div className="adm-kpi-row">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="adm-kpi" style={{ minHeight: 110 }}>
+              <div style={{ width: '60%', height: 14, borderRadius: 6, background: 'var(--a-line)', marginBottom: 12, opacity: 0.5 }} />
+              <div style={{ width: '40%', height: 28, borderRadius: 8, background: 'var(--a-line)', opacity: 0.4 }} />
+            </div>
+          ))}
+        </div>
+        <div className="adm-grid-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="adm-card" style={{ minHeight: 200 }}>
+              <div style={{ width: '50%', height: 16, borderRadius: 6, background: 'var(--a-line)', opacity: 0.4 }} />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
+  const sb = stats?.statusBreakdown || {};
   const bookingsByStatus = [
-    { label: 'Confirmed', value: recent.filter((b) => b.status === 'confirmed').length, color: '#1FA971' },
-    { label: 'Completed', value: recent.filter((b) => b.status === 'completed').length, color: '#3B82F6' },
-    { label: 'Cancelled', value: recent.filter((b) => b.status === 'cancelled').length, color: '#CE1126' },
+    { label: 'Confirmed', value: sb.confirmed || 0, color: '#1FA971' },
+    { label: 'Completed', value: sb.completed || 0, color: '#3B82F6' },
+    { label: 'Cancelled', value: sb.cancelled || 0, color: '#CE1126' },
   ];
 
   const weekTotal = dailyRevenue.reduce((s, d) => s + d.revenue, 0);

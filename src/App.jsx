@@ -45,6 +45,7 @@ import DriverVehicleSetup from './pages/driver/DriverVehicleSetup';
 import DriverProfile from './pages/driver/DriverProfile';
 import DriverTripManager from './pages/driver/DriverTripManager';
 import ReportIncident from './pages/ReportIncident';
+import NotFound from './pages/NotFound';
 
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminLogin from './pages/admin/AdminLogin';
@@ -82,7 +83,8 @@ const OfflineWelcome = () => {
 // Catch-all lands each signed-in role on its own home, avoiding a redundant
 // bounce through the other role's root.
 const RoleHome = () => {
-  const { user } = useAuth();
+  const { user, isAuthed } = useAuth();
+  if (!isAuthed) return <NotFound />;
   return <Navigate to={user?.role === 'driver' ? '/driver' : '/'} replace />;
 };
 
