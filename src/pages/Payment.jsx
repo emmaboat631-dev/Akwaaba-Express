@@ -148,7 +148,7 @@ const Payment = () => {
           <OperatorMark operator={operator} size={40} />
           <div style={{ flex: 1 }}>
             <div className="semibold t-sm">{routeLabel}</div>
-            <div className="t-xs muted">{operator.name} · {qty} seat{qty === 1 ? '' : 's'}</div>
+            <div className="t-xs muted">{operator?.name || 'Operator'} · {qty} seat{qty === 1 ? '' : 's'}</div>
           </div>
           {isLive && <span className="badge badge-success"><span className="live-dot" /> Live</span>}
         </div>

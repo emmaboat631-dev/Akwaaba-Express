@@ -17,19 +17,19 @@ const TripCard = ({ trip, onClick }) => {
         <div className="flex items-center gap-2">
           <OperatorMark operator={operator} size={34} />
           <div>
-            <div className="t-sm semibold">{operator.name}</div>
+            <div className="t-sm semibold">{operator?.name || 'Operator'}</div>
             <div className="t-xs muted flex items-center gap-1">
-              <Star size={11} fill="#F4C430" stroke="#F4C430" /> {operator.rating}
+              <Star size={11} fill="#F4C430" stroke="#F4C430" /> {operator?.rating || '—'}
             </div>
           </div>
         </div>
-        <span className="badge badge-primary">{busType.name}</span>
+        <span className="badge badge-primary">{busType?.name || 'Bus'}</span>
       </div>
 
       <div className="flex items-center justify-between">
         <div className="text-center">
           <div className="bold t-num" style={{ fontSize: 19 }}>{minutesToClock(trip.departMins)}</div>
-          <div className="t-xs muted">{from.name}</div>
+          <div className="t-xs muted">{from?.name || trip.fromId}</div>
         </div>
 
         <div className="flex flex-col items-center" style={{ flex: 1, padding: '0 10px' }}>
@@ -44,7 +44,7 @@ const TripCard = ({ trip, onClick }) => {
 
         <div className="text-center">
           <div className="bold t-num" style={{ fontSize: 19 }}>{minutesToClock(trip.arriveMins)}</div>
-          <div className="t-xs muted">{to.name}</div>
+          <div className="t-xs muted">{to?.name || trip.toId}</div>
         </div>
       </div>
 
@@ -52,8 +52,8 @@ const TripCard = ({ trip, onClick }) => {
 
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3 muted t-xs">
-          {busType.amenities.includes('Air conditioning') && <Snowflake size={14} />}
-          {busType.amenities.includes('WiFi') && <Wifi size={14} />}
+          {busType?.amenities?.includes('Air conditioning') && <Snowflake size={14} />}
+          {busType?.amenities?.includes('WiFi') && <Wifi size={14} />}
           <span>{trip.seatsAvailable} seats left</span>
         </div>
         <div className="bold t-num" style={{ fontSize: 18, color: 'var(--primary-dark)' }}>{formatCedi(trip.price)}</div>

@@ -20,7 +20,7 @@ const LiveBusCard = ({ bus, onClick }) => {
           <span className="flex items-center gap-1"><span className="live-dot" /> {bus.etaMin} min away</span>
           <span className="flex items-center gap-1"><Users size={12} /> {bus.seatsAvailable} free</span>
         </div>
-        <div className="t-xs muted mt-1">{operator.name} · {busType.name} · {bus.plate}</div>
+        <div className="t-xs muted mt-1">{operator?.name || 'Operator'} · {busType?.name || 'Bus'} · {bus.plate}</div>
       </div>
 
       <div className="text-right no-shrink">

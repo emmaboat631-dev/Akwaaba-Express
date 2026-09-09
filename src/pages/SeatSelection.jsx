@@ -48,10 +48,10 @@ const SeatSelection = () => {
 
   return (
     <div className="screen fade-up">
-      <Header title="Choose your seats" subtitle={`${busType.name} · ${pax} passenger${pax === 1 ? '' : 's'}`} />
+      <Header title="Choose your seats" subtitle={`${busType?.name || 'Bus'} · ${pax} passenger${pax === 1 ? '' : 's'}`} />
 
       <SeatMap
-        cols={busType.cols}
+        cols={busType?.cols || [2, 2]}
         total={trip.seatsTotal}
         taken={trip.seatsTaken}
         selected={selected}

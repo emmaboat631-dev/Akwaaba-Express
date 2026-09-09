@@ -98,7 +98,7 @@ const LiveTracking = () => {
           <div style={{ flex: 1 }}>
             <div className="semibold">{bus.routeName}</div>
             <div className="t-xs muted flex items-center gap-1">
-              {operator.name} · <Star size={11} fill="#F4C430" stroke="#F4C430" /> {operator.rating}
+              {operator?.name || 'Operator'} · <Star size={11} fill="#F4C430" stroke="#F4C430" /> {operator?.rating || '—'}
             </div>
           </div>
           <span className="badge badge-success"><span className="live-dot" /> Live</span>
@@ -116,7 +116,7 @@ const LiveTracking = () => {
             <div className="t-xs muted">seats free</div>
           </div>
           <div className="card flex-1 text-center" style={{ padding: 14 }}>
-            <div className="muted t-xs" style={{ marginBottom: 6 }}>{busType.name}</div>
+            <div className="muted t-xs" style={{ marginBottom: 6 }}>{busType?.name || 'Bus'}</div>
             <div className="bold" style={{ fontSize: 20, color: 'var(--primary-dark)' }}>{formatCedi(bus.pricePerSeat)}</div>
             <div className="t-xs muted">per seat</div>
           </div>
