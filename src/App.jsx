@@ -72,20 +72,33 @@ const Lazy = ({ children }) => <Suspense fallback={null}>{children}</Suspense>;
 const NAV_ROUTES = ['/', '/live', '/trips', '/profile'];
 const DRIVER_NAV_ROUTES = ['/driver', '/driver/earnings', '/driver/trips', '/driver/profile'];
 
-const RequireAuth = ({ children, role }) => {
+// Every role's landing route in one place. A role this doesn't know lands on
+// the passenger root — which is itself guarded, so callers must also check
+// they aren't redirecting to the route they're already on.
+export const homeFor = (role) => {
+  if (role === 'driver') return '/driver';
+  if (role === 'admin') return '/admin';
+  return '/';
+};
+
+export const RequireAuth = ({ children, role }) => {
   const { isAuthed, user, loading } = useAuth();
   const location = useLocation();
   if (loading) return null;
   if (!isAuthed) return <Navigate to="/welcome" replace state={{ from: location.pathname }} />;
   if (role && user.role !== role) {
-    return <Navigate to={user.role === 'driver' ? '/driver' : '/'} replace />;
+    const target = homeFor(user.role);
+    // Bailing to /welcome when the target is this very route keeps an
+    // unmapped role from bouncing between a guard and itself forever.
+    if (target === location.pathname) return <Navigate to="/welcome" replace />;
+    return <Navigate to={target} replace />;
   }
   return children;
 };
 
 const OfflineWelcome = () => {
-  const { isAuthed } = useAuth();
-  if (isAuthed) return <Navigate to="/" replace />;
+  const { isAuthed, user } = useAuth();
+  if (isAuthed) return <Navigate to={homeFor(user?.role)} replace />;
   return (
     <>
       <OfflineGate />
@@ -99,7 +112,7 @@ const OfflineWelcome = () => {
 const RoleHome = () => {
   const { user, isAuthed } = useAuth();
   if (!isAuthed) return <NotFound />;
-  return <Navigate to={user?.role === 'driver' ? '/driver' : '/'} replace />;
+  return <Navigate to={homeFor(user?.role)} replace />;
 };
 
 const AdminGuard = ({ children }) => {
