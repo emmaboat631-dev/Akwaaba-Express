@@ -85,8 +85,19 @@ const CharterRequest = () => {
 
   const busType = busTypeById(busTypeId);
 
+  // Moving the departure past an already-chosen return would leave a trip that
+  // comes back before it leaves, so clearing forces a deliberate re-pick.
+  // ISO yyyy-MM-dd strings compare correctly, so no parsing is needed.
+  const handleDepartDate = (next) => {
+    setDepartDate(next);
+    if (returnDate && returnDate < next) setReturnDate('');
+  };
+
   const canNext = () => {
-    if (step === 0) return pickupCityId && destCityId && departDate && departTime;
+    if (step === 0) {
+      return pickupCityId && destCityId && departDate && departTime
+        && (!isReturnTrip || (returnDate && returnTime));
+    }
     if (step === 1) return groupName && passengerCount >= 1 && eventTypeId;
     if (step === 2) return busTypeId;
     return true;
@@ -292,7 +303,7 @@ const CharterRequest = () => {
       <DatePicker
         open={showDepartCal}
         value={departDate}
-        onSelect={setDepartDate}
+        onSelect={handleDepartDate}
         onClose={() => setShowDepartCal(false)}
         title="Departure date"
       />
