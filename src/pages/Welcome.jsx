@@ -13,12 +13,12 @@ const Welcome = () => {
       className="screen fade-up"
       style={{ background: 'linear-gradient(165deg, #0B4A3C 0%, #06392F 45%, #032019 100%)', color: '#fff' }}
     >
-      {/* Brand */}
+      {/* Brand — wordmark's already carried by the hero, so keep this a plain name. */}
       <div className="flex items-center mb-4">
-        <img src="/logo-light.png" alt="Akwaaba Express" style={{ height: 46, width: 'auto' }} />
+        <span className="wordmark" style={{ fontSize: 18 }}>Akwaaba Express</span>
       </div>
 
-      {/* Hero panel — evokes the reference's bus image */}
+      {/* Hero panel — full logo lockup as the illustration. */}
       <div
         style={{
           flex: 1,
@@ -32,15 +32,10 @@ const Welcome = () => {
           position: 'relative',
           overflow: 'hidden',
           marginBottom: 28,
+          padding: 24,
         }}
       >
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.12, display: 'grid', placeItems: 'center' }}>
-          <span style={{ fontSize: 130, fontWeight: 800, letterSpacing: 2 }}>GH</span>
-        </div>
-        <img src="/realistic_bus.png" alt="Realistic Bus" style={{ width: 280, height: 'auto', zIndex: 1, objectFit: 'contain', mixBlendMode: 'multiply' }} />
-        <div style={{ position: 'absolute', bottom: 16, left: 16, right: 16, height: 3, background: 'rgba(255,255,255,0.4)' }} />
-        <div style={{ position: 'absolute', bottom: 11, left: 16, width: 13, height: 13, borderRadius: '50%', background: '#fff' }} />
-        <div style={{ position: 'absolute', bottom: 11, right: 16, width: 13, height: 13, borderRadius: '50%', background: '#fff' }} />
+        <img src="/logo-light.png" alt="Akwaaba Express" style={{ width: '85%', maxWidth: 320, height: 'auto', objectFit: 'contain' }} />
       </div>
 
       {/* Headline (our content, reference style) */}
