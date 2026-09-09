@@ -26,13 +26,23 @@
 - **Vehicle setup** — register and manage vehicle details
 - **Document verification** — submit license and vehicle documents for admin approval
 
+### Group Charter
+
+- **Charter booking** — request a private bus for group travel with custom routes, dates, and passenger lists
+- **Charter management** — view charter status, add passengers, and download group QR tickets
+- **Driver charter trips** — drivers can view assigned charters and scan passenger QR codes
+- **Admin charter oversight** — admins can review, approve, and manage all charter requests
+
 ### Admin Dashboard
 
 - **Overview** — key metrics: total users, bookings, revenue, active trips
 - **User management** — view and manage all registered users
 - **Booking management** — view all bookings with filtering and search
 - **Trip management** — monitor and manage all trips
+- **Charter management** — review and manage group charter requests
 - **Document verification** — review and approve/reject driver documents
+- **Route management** — manage intercity routes and operators
+- **Driver management** — view and manage registered drivers
 
 ### General
 
@@ -131,6 +141,7 @@ src/
 ├── services/          API & business logic
 │   ├── api             Supabase queries: trip search, booking creation
 │   ├── adminApi        admin dashboard queries
+│   ├── charterApi      group charter CRUD operations
 │   ├── paystack        Paystack payment integration
 │   ├── deepLink        Capacitor deep link handler for OAuth
 │   ├── liveTracking    real-time bus position engine
@@ -169,7 +180,6 @@ The app uses CSS custom properties defined in `src/index.css`:
 ## Authors
 
 - **Nimako-Boateng Emmanuel** — Developer & Designer
-- **Joseph Engmann** — Developer & Designer
 - **Prince Emmanuel Elorm Gebu** — Developer & Designer
 
 ## License
