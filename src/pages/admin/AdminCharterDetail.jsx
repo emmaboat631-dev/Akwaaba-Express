@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bus, Calendar, MapPin, Users, Save, CheckCircle } from 'lucide-react';
 import { charterAdminApi } from '../../services/charterApi';
+import { useToast } from '../../context/ToastContext';
 import { formatCedi } from '../../utils/format';
 import { cityById } from '../../data/cities';
 import { busTypeById } from '../../data/operators';
@@ -11,6 +12,7 @@ const STATUS_FLOW = ['pending', 'quoted', 'accepted', 'deposit_paid', 'confirmed
 const AdminCharterDetail = () => {
   const { charterId } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [charter, setCharter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,7 +34,10 @@ const AdminCharterDetail = () => {
         setAdminNotes(c.adminNotes || '');
         setNewStatus(c.status);
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        toast("Couldn't load this charter — check your connection.", 'error');
+      })
       .finally(() => setLoading(false));
   };
 
@@ -51,9 +56,11 @@ const AdminCharterDetail = () => {
       if (Object.keys(updates).length) {
         const updated = await charterAdminApi.updateCharter(charterId, updates);
         setCharter(updated);
+        toast('Charter updated', 'success');
       }
     } catch (err) {
       console.error(err);
+      toast("Couldn't save your changes — please try again.", 'error');
     }
     setSaving(false);
   };

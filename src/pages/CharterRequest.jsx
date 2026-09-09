@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { ArrowLeft, ArrowRight, Bus, Calendar, Clock, MapPin, Users, FileText, Check } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { charterApi } from '../services/charterApi';
 import { cityById } from '../data/cities';
 import { busTypeById } from '../data/operators';
@@ -38,6 +39,7 @@ const StepIndicator = ({ current }) => (
 const CharterRequest = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const toast = useToast();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [picker, setPicker] = useState(null);
@@ -63,9 +65,16 @@ const CharterRequest = () => {
   const [busTypeId, setBusTypeId] = useState('standard');
 
   useEffect(() => {
-    charterApi.getEventTypes().then(setEventTypes).catch(console.error);
-    charterApi.getPricing().then(setPricing).catch(console.error);
-  }, []);
+    // Without these the form has no event types and no price to quote, so a
+    // failure here has to be visible rather than silently degrading.
+    Promise.all([
+      charterApi.getEventTypes().then(setEventTypes),
+      charterApi.getPricing().then(setPricing),
+    ]).catch((err) => {
+      console.error(err);
+      toast("Couldn't load charter options — check your connection.", 'error');
+    });
+  }, [toast]);
 
   const pickup = cityById(pickupCityId);
   const dest = cityById(destCityId);
@@ -98,6 +107,7 @@ const CharterRequest = () => {
       navigate(`/charter/${charter.id}`, { replace: true });
     } catch (err) {
       console.error(err);
+      toast("Couldn't send your request — check your connection and try again.", 'error');
       setSubmitting(false);
     }
   };

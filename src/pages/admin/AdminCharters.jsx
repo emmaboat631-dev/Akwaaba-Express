@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search, Eye } from 'lucide-react';
 import { charterAdminApi } from '../../services/charterApi';
+import { useToast } from '../../context/ToastContext';
 import { formatCedi } from '../../utils/format';
 import { cityById } from '../../data/cities';
 
@@ -10,6 +11,7 @@ const PAGE_SIZE = 15;
 const STATUS_OPTS = ['', 'pending', 'quoted', 'accepted', 'deposit_paid', 'confirmed', 'in_progress', 'completed', 'cancelled'];
 
 const AdminCharters = () => {
+  const toast = useToast();
   const navigate = useNavigate();
   const [charters, setCharters] = useState([]);
   const [total, setTotal] = useState(0);
@@ -22,7 +24,7 @@ const AdminCharters = () => {
     setLoading(true);
     charterAdminApi.getCharters({ page, pageSize: PAGE_SIZE, status: status || undefined })
       .then(({ data, total }) => { setCharters(data); setTotal(total); })
-      .catch(console.error)
+      .catch((err) => { console.error(err); toast("Couldn't load charters — check your connection.", 'error'); })
       .finally(() => setLoading(false));
   };
 

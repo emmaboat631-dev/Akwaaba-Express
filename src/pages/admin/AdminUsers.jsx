@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { adminApi } from '../../services/adminApi';
+import { useToast } from '../../context/ToastContext';
 
 const PAGE_SIZE = 15;
 
 const AdminUsers = () => {
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -16,7 +18,7 @@ const AdminUsers = () => {
     setLoading(true);
     adminApi.getUsers({ page, pageSize: PAGE_SIZE, role: role || undefined })
       .then(({ data, total }) => { setUsers(data); setTotal(total); })
-      .catch(console.error)
+      .catch((err) => { console.error(err); toast("Couldn't load users — check your connection.", 'error'); })
       .finally(() => setLoading(false));
   }, [page, role]);
 

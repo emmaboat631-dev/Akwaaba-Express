@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Users, Ticket, Bus, Wallet, TrendingUp, TrendingDown, ArrowRight, Clock, MapPin, Radio, RefreshCw, Route, Zap, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
+import { useToast } from '../../context/ToastContext';
 import { formatCedi } from '../../utils/format';
 import { cityById } from '../../data/cities';
 
@@ -106,6 +107,7 @@ const REFRESH_INTERVAL = 30_000;
 
 const AdminOverview = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [stats, setStats] = useState(null);
   const [recent, setRecent] = useState([]);
   const [todayTrips, setTodayTrips] = useState([]);
@@ -145,10 +147,13 @@ const AdminOverview = () => {
       setLastRefresh(new Date());
     } catch (err) {
       console.error('Admin stats:', err);
+      // Only the first load is worth interrupting for — this also runs on a
+      // timer, and a toast per failed background refresh would just spam.
+      if (isInitial) toast("Couldn't load the dashboard — check your connection.", 'error');
     } finally {
       if (isInitial) setLoading(false);
     }
-  }, [revDays]);
+  }, [revDays, toast]);
 
   useEffect(() => {
     load(true);
@@ -183,10 +188,11 @@ const AdminOverview = () => {
       setSearchResults({ users: matchedUsers.slice(0, 5), bookings: matchedBookings.slice(0, 5) });
     } catch (err) {
       console.error('Search:', err);
+      toast("Search failed — check your connection and try again.", 'error');
     } finally {
       setSearching(false);
     }
-  }, []);
+  }, [toast]);
 
   if (loading) {
     return (

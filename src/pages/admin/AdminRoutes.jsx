@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Route as RouteIcon, TrendingUp, Ticket, Wallet } from 'lucide-react';
 import { adminApi } from '../../services/adminApi';
+import { useToast } from '../../context/ToastContext';
 import { cityById } from '../../data/cities';
 import { formatCedi } from '../../utils/format';
 
 const AdminRoutes = () => {
+  const toast = useToast();
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    adminApi.getTopRoutes(20).then(setRoutes).catch(console.error).finally(() => setLoading(false));
+    adminApi.getTopRoutes(20).then(setRoutes).catch((err) => { console.error(err); toast("Couldn't load routes — check your connection.", 'error'); }).finally(() => setLoading(false));
   }, []);
 
   const maxBookings = Math.max(...routes.map((r) => r.bookings), 1);

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Bus, Calendar, CheckCircle, MapPin, Users, Scan } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { charterAdminApi, charterApi } from '../../services/charterApi';
 import { cityById } from '../../data/cities';
 import { busTypeById } from '../../data/operators';
@@ -14,6 +15,7 @@ const DriverCharterTrip = () => {
   const { charterId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const toast = useToast();
   const [charter, setCharter] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +23,10 @@ const DriverCharterTrip = () => {
     setLoading(true);
     charterApi.getCharter(charterId)
       .then(setCharter)
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        toast("Couldn't load this charter — check your connection.", 'error');
+      })
       .finally(() => setLoading(false));
   };
 
@@ -33,6 +38,7 @@ const DriverCharterTrip = () => {
       load();
     } catch (err) {
       console.error(err);
+      toast("Couldn't update that passenger — please try again.", 'error');
     }
   };
 

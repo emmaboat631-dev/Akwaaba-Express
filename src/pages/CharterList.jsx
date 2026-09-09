@@ -4,6 +4,7 @@ import { Bus, Calendar, MapPin, Plus } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 import { charterApi } from '../services/charterApi';
+import { useToast } from '../context/ToastContext';
 import { cityById } from '../data/cities';
 import { formatCedi } from '../utils/format';
 import Header from '../components/Header';
@@ -22,6 +23,7 @@ const STATUS_COLORS = {
 };
 
 const CharterList = () => {
+  const toast = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [charters, setCharters] = useState([]);
@@ -30,7 +32,7 @@ const CharterList = () => {
   useEffect(() => {
     charterApi.getMyCharters(user.id)
       .then(setCharters)
-      .catch(console.error)
+      .catch((err) => { console.error(err); toast("Couldn't load your charters — check your connection.", 'error'); })
       .finally(() => setLoading(false));
   }, [user.id]);
 

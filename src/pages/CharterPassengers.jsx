@@ -3,12 +3,14 @@ import { useParams } from 'react-router-dom';
 import { UserPlus, Trash2, Users } from 'lucide-react';
 
 import { charterApi } from '../services/charterApi';
+import { useToast } from '../context/ToastContext';
 import Header from '../components/Header';
 import EmptyState from '../components/EmptyState';
 import { SkeletonLine } from '../components/Skeleton';
 
 const CharterPassengers = () => {
   const { charterId } = useParams();
+  const toast = useToast();
   const [charter, setCharter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -19,7 +21,10 @@ const CharterPassengers = () => {
     setLoading(true);
     charterApi.getCharter(charterId)
       .then(setCharter)
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        toast("Couldn't load the passenger list — check your connection.", 'error');
+      })
       .finally(() => setLoading(false));
   };
 
@@ -35,6 +40,7 @@ const CharterPassengers = () => {
       load();
     } catch (err) {
       console.error(err);
+      toast("Couldn't add that passenger — please try again.", 'error');
     }
     setAdding(false);
   };
@@ -46,6 +52,7 @@ const CharterPassengers = () => {
       load();
     } catch (err) {
       console.error(err);
+      toast("Couldn't remove that passenger — please try again.", 'error');
     }
   };
 

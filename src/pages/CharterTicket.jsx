@@ -4,6 +4,7 @@ import { Bus, Calendar, MapPin, QrCode, Users } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 import { charterApi } from '../services/charterApi';
+import { useToast } from '../context/ToastContext';
 import { cityById } from '../data/cities';
 import { busTypeById } from '../data/operators';
 import Header from '../components/Header';
@@ -11,6 +12,7 @@ import EmptyState from '../components/EmptyState';
 import { SkeletonLine } from '../components/Skeleton';
 
 const CharterTicket = () => {
+  const toast = useToast();
   const { charterId } = useParams();
   const [charter, setCharter] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,7 @@ const CharterTicket = () => {
   useEffect(() => {
     charterApi.getCharter(charterId)
       .then(setCharter)
-      .catch(console.error)
+      .catch((err) => { console.error(err); toast("Couldn't load this ticket — check your connection.", 'error'); })
       .finally(() => setLoading(false));
   }, [charterId]);
 

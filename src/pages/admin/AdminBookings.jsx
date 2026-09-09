@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { adminApi } from '../../services/adminApi';
+import { useToast } from '../../context/ToastContext';
 import { formatCedi } from '../../utils/format';
 import { cityById } from '../../data/cities';
 
 const PAGE_SIZE = 15;
 
 const AdminBookings = () => {
+  const toast = useToast();
   const [bookings, setBookings] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -18,14 +20,23 @@ const AdminBookings = () => {
     setLoading(true);
     adminApi.getBookings({ page, pageSize: PAGE_SIZE, status: status || undefined })
       .then(({ data, total }) => { setBookings(data); setTotal(total); })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        toast("Couldn't load bookings — check your connection.", 'error');
+      })
       .finally(() => setLoading(false));
   };
 
   useEffect(load, [page, status]);
 
   const handleStatusChange = async (id, newStatus) => {
-    try { await adminApi.updateBookingStatus(id, newStatus); load(); } catch (err) { console.error(err); }
+    try {
+      await adminApi.updateBookingStatus(id, newStatus);
+      load();
+    } catch (err) {
+      console.error(err);
+      toast("Couldn't update that booking — please try again.", 'error');
+    }
   };
 
   const filtered = search

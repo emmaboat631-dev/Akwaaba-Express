@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Bus, Calendar, Clock, MapPin, Users, AlertCircle, CheckCircle, XCircle, CreditCard, UserPlus } from 'lucide-react';
 
 import { charterApi } from '../services/charterApi';
+import { useToast } from '../context/ToastContext';
 import { cityById } from '../data/cities';
 import { busTypeById, operatorById } from '../data/operators';
 import { formatCedi } from '../utils/format';
@@ -35,6 +36,7 @@ const STATUS_LABELS = {
 const CharterDetails = () => {
   const { charterId } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [charter, setCharter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -43,7 +45,10 @@ const CharterDetails = () => {
     setLoading(true);
     charterApi.getCharter(charterId)
       .then(setCharter)
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        toast("Couldn't load this charter — check your connection.", 'error');
+      })
       .finally(() => setLoading(false));
   };
 
@@ -57,6 +62,7 @@ const CharterDetails = () => {
       load();
     } catch (err) {
       console.error(err);
+      toast("Couldn't cancel the charter — please try again.", 'error');
     }
     setCancelling(false);
   };

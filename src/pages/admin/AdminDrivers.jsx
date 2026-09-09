@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Search, Star, Bus, ShieldCheck, ShieldX, Clock } from 'lucide-react';
 import { adminApi } from '../../services/adminApi';
+import { useToast } from '../../context/ToastContext';
 
 const PAGE_SIZE = 15;
 
 const AdminDrivers = () => {
+  const toast = useToast();
   const [drivers, setDrivers] = useState([]);
   const [driverStats, setDriverStats] = useState({});
   const [total, setTotal] = useState(0);
@@ -23,7 +25,7 @@ const AdminDrivers = () => {
         setTotal(t);
         setDriverStats(stats);
       })
-      .catch(console.error)
+      .catch((err) => { console.error(err); toast("Couldn't load drivers — check your connection.", 'error'); })
       .finally(() => setLoading(false));
   }, [page]);
 

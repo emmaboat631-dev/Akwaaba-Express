@@ -119,9 +119,12 @@ const Trips = () => {
 
   useEffect(() => {
     if (user?.id) {
-      charterApi.getMyCharters(user.id).then(setCharters).catch(console.error);
+      charterApi.getMyCharters(user.id).then(setCharters).catch((err) => {
+        console.error(err);
+        toast("Couldn't load your charters — pull down to retry.", 'error');
+      });
     }
-  }, [user?.id]);
+  }, [user?.id, toast]);
 
   const { upcoming, past } = useMemo(() => ({
     upcoming: bookings.filter((b) => !isPast(b)),
@@ -137,7 +140,13 @@ const Trips = () => {
   const refresh = async () => {
     await refetch();
     if (user?.id) {
-      charterApi.getMyCharters(user.id).then(setCharters).catch(console.error);
+      try {
+        setCharters(await charterApi.getMyCharters(user.id));
+      } catch (err) {
+        console.error(err);
+        toast("Couldn't refresh your charters — check your connection.", 'error');
+        return;
+      }
     }
     toast('Up to date', 'info');
   };

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Search, ShieldCheck, ShieldX, Eye, Clock } from 'lucide-react';
 import { adminApi } from '../../services/adminApi';
+import { useToast } from '../../context/ToastContext';
 
 const PAGE_SIZE = 15;
 
@@ -108,6 +109,7 @@ const DetailModal = ({ driver, onClose, onAction }) => {
 };
 
 const AdminDocuments = () => {
+  const toast = useToast();
   const [drivers, setDrivers] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -120,7 +122,10 @@ const AdminDocuments = () => {
     setLoading(true);
     adminApi.getDriverVerifications({ page, pageSize: PAGE_SIZE, status: filter || undefined })
       .then(({ data, total }) => { setDrivers(data); setTotal(total); })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        toast("Couldn't load driver documents — check your connection.", 'error');
+      })
       .finally(() => setLoading(false));
   };
 
@@ -133,6 +138,7 @@ const AdminDocuments = () => {
       load();
     } catch (err) {
       console.error(err);
+      toast("Couldn't save that decision — please try again.", 'error');
     }
   };
 
