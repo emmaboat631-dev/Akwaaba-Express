@@ -30,8 +30,8 @@ export function send(title, options = {}) {
   if (!isEnabled()) return;
   try {
     const n = new Notification(title, {
-      icon: '/pwa-icon.svg',
-      badge: '/pwa-icon.svg',
+      icon: '/pwa-icon.png',
+      badge: '/pwa-icon.png',
       ...options,
     });
     n.onclick = () => {

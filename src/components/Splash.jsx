@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Bus } from 'lucide-react';
 
 // Splash sequence:
 //   0.0 – 1.2s   letters of the wordmark cascade in
@@ -128,7 +127,7 @@ const Splash = () => {
             justifyContent: 'center',
           }}
         >
-          <Bus size={44} strokeWidth={2.2} />
+          <img src="/bus-mark-light.png" alt="" style={{ height: 52, width: 'auto' }} />
         </motion.div>
       </div>
     </motion.div>

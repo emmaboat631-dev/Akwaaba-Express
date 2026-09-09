@@ -50,8 +50,7 @@ const AdminLayout = () => {
 
       <aside className={`adm-side${mobileOpen ? ' open' : ''}`}>
         <div className="adm-brand">
-          <div className="adm-brand-icon">AE</div>
-          <span className="adm-brand-name">Akwaaba Express</span>
+          <img src="/logo-light.png" alt="Akwaaba Express" className="adm-brand-logo" />
           <button className="adm-close" onClick={() => setMobileOpen(false)}>
             <X size={18} />
           </button>

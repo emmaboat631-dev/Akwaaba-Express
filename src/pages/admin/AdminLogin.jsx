@@ -54,8 +54,7 @@ const AdminLogin = () => {
       <div className="adm-login-form-side">
         <div className="adm-login-form-wrap">
           <div className="adm-login-logo-row">
-            <div className="adm-brand-icon" style={{ width: 44, height: 44, fontSize: 16 }}>AE</div>
-            <span className="adm-login-brand-text">Akwaaba Express</span>
+            <img src="/logo.png" alt="Akwaaba Express" className="adm-login-logo" />
           </div>
 
           <div className="adm-login-form-head">

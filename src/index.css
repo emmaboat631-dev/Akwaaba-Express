@@ -563,13 +563,8 @@ h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
   padding: 0 10px 20px;
   margin-bottom: 8px;
 }
-.adm-brand-icon {
-  width: 34px; height: 34px; border-radius: 8px;
-  background: var(--a-gold); color: #3D2E05;
-  font-weight: 800; font-size: 13px;
-  display: flex; align-items: center; justify-content: center;
-}
-.adm-brand-name { font-weight: 700; font-size: 14px; color: var(--a-sidebar-ink); letter-spacing: -0.2px; flex: 1; }
+/* The wordmark carries the brand name, so it replaces the old icon + text. */
+.adm-brand-logo { height: 30px; width: auto; margin-right: auto; }
 .adm-close {
   display: none; width: 28px; height: 28px; border-radius: 6px; border: none;
   background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7);
@@ -922,7 +917,7 @@ h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
 .adm-login-logo-row {
   display: flex; align-items: center; gap: 12px; margin-bottom: 36px;
 }
-.adm-login-brand-text { font-weight: 700; font-size: 18px; color: #1A2E24; }
+.adm-login-logo { height: 58px; width: auto; }
 .adm-login-form-head { margin-bottom: 28px; }
 .adm-login-title { font-size: 30px; font-weight: 700; color: #1A2E24; margin-bottom: 8px; }
 .adm-login-sub { font-size: 14px; color: #7A9488; line-height: 1.5; }

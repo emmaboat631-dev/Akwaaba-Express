@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
-import { Bus, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Welcome = () => {
@@ -14,11 +14,8 @@ const Welcome = () => {
       style={{ background: 'linear-gradient(165deg, #0B4A3C 0%, #06392F 45%, #032019 100%)', color: '#fff' }}
     >
       {/* Brand */}
-      <div className="flex items-center gap-2 mb-4">
-        <div style={{ width: 38, height: 38, borderRadius: 'var(--r-md)', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Bus size={20} />
-        </div>
-        <span className="wordmark" style={{ fontSize: 18 }}>Akwaaba Express</span>
+      <div className="flex items-center mb-4">
+        <img src="/logo-light.png" alt="Akwaaba Express" style={{ height: 46, width: 'auto' }} />
       </div>
 
       {/* Hero panel — evokes the reference's bus image */}
