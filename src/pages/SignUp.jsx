@@ -57,12 +57,16 @@ const SignUp = () => {
       email: form.email,
       password: form.password,
       options: {
+        // Clicking the confirmation link brings the user back here so
+        // AuthContext's onAuthStateChange picks up the fresh session and
+        // signs them in without another step.
+        emailRedirectTo: `${window.location.origin}/`,
         data: {
           name: `${form.first} ${form.last}`.trim(),
           phone: form.phone,
-          role: role
-        }
-      }
+          role: role,
+        },
+      },
     });
 
     if (error) {
@@ -72,7 +76,7 @@ const SignUp = () => {
     }
 
     if (data?.user && !data.session) {
-      toast('Verification code sent to your email', 'success');
+      toast('Confirmation email sent', 'success');
       navigate('/verify', { replace: true, state: { email: form.email, role } });
     } else {
       toast('Account created. Akwaaba!', 'success');
