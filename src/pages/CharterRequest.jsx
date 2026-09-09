@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
-import { ArrowLeft, ArrowRight, Bus, Calendar, Clock, MapPin, Users, FileText, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bus, Calendar, MapPin, Users, FileText, Check } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -9,11 +9,32 @@ import { charterApi } from '../services/charterApi';
 import { cityById } from '../data/cities';
 import { busTypeById } from '../data/operators';
 import { formatCedi } from '../utils/format';
+import { haversineKm } from '../utils/geo';
 import CityPicker from '../components/CityPicker';
 import DatePicker from '../components/DatePicker';
 import Header from '../components/Header';
 
 const STEPS = ['Route', 'Details', 'Bus', 'Review'];
+
+// Ghana's trunk roads wander enough that straight-line distance undersells a
+// route by roughly a quarter. Speed is a loaded coach on those roads, not a
+// motorway figure, and the fixed hours cover boarding plus comfort stops.
+// Checked against real route lengths (Accra–Kumasi, –Tamale, –Bolgatanga,
+// –Cape Coast, –Takoradi, –Wa): all within 12%.
+const ROAD_FACTOR = 1.25;
+const AVG_SPEED_KMH = 55;
+const LOADING_HOURS = 1.5;
+
+// The customer picks cities, not kilometres — both figures the quote needs
+// are derived from that choice. Returns nulls until both cities are set.
+export const routeEstimate = (pickup, dest) => {
+  if (!pickup || !dest) return { distanceKm: null, durationHours: null };
+  const distanceKm = Math.round(
+    haversineKm([pickup.lat, pickup.lng], [dest.lat, dest.lng]) * ROAD_FACTOR,
+  );
+  const durationHours = Math.round((distanceKm / AVG_SPEED_KMH + LOADING_HOURS) * 10) / 10;
+  return { distanceKm, durationHours };
+};
 
 const StepIndicator = ({ current }) => (
   <div className="flex items-center gap-2 mb-4" style={{ padding: '0 4px' }}>
@@ -79,8 +100,10 @@ const CharterRequest = () => {
   const pickup = cityById(pickupCityId);
   const dest = cityById(destCityId);
 
-  const estimatedPrice = pricing.length && busTypeId
-    ? charterApi.estimatePrice(pricing, busTypeId, 200, 8, isReturnTrip)
+  const { distanceKm, durationHours } = routeEstimate(pickup, dest);
+
+  const estimatedPrice = pricing.length && busTypeId && distanceKm
+    ? charterApi.estimatePrice(pricing, busTypeId, distanceKm, durationHours, isReturnTrip)
     : null;
 
   const busType = busTypeById(busTypeId);
@@ -256,6 +279,7 @@ const CharterRequest = () => {
               {isReturnTrip && <Row label="Return" value={`${returnDate} at ${returnTime}`} />}
               <Row label="Passengers" value={passengerCount} />
               <Row label="Bus type" value={busType?.name || busTypeId} />
+              {distanceKm && <Row label="Distance" value={`~${distanceKm} km · ~${durationHours} hrs`} />}
             </div>
           </div>
 
