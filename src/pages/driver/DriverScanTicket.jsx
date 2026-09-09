@@ -12,6 +12,7 @@ import { cityById } from '../../data/cities';
 import { operatorById } from '../../data/operators';
 import { formatCedi } from '../../utils/format';
 import { playScanSuccess, playScanError } from '../../utils/sound';
+import { charterApi } from '../../services/charterApi';
 
 import Header from '../../components/Header';
 import QrScanner from '../../components/driver/QrScanner';
@@ -104,15 +105,37 @@ const DriverScanTicket = () => {
     else navigate(backTarget, { replace: true });
   };
 
-  const lookup = (text) => {
-    const id = extractBookingId(text);
+  const lookup = async (text) => {
+    const raw = String(text);
+    const charterMatch = raw.match(/\/charter\/([^/?#]+)/);
+    if (charterMatch) {
+      const charterId = charterMatch[1];
+      if (charterId === lastScannedId) return;
+      setLastScannedId(charterId);
+      try {
+        const charter = await charterApi.getCharter(charterId);
+        if (charter) {
+          playScanSuccess();
+          setResult({ status: 'charter', charter });
+        } else {
+          playScanError();
+          setResult({ status: 'not-found', id: charterId });
+        }
+      } catch {
+        playScanError();
+        setResult({ status: 'not-found', id: charterId });
+      }
+      return;
+    }
+
+    const id = extractBookingId(raw);
     if (!id || id === lastScannedId) return;
     setLastScannedId(id);
     const booking = getBooking(id) || relay.getBooking(id);
-    if (!booking) { 
+    if (!booking) {
       playScanError();
-      setResult({ status: 'not-found', id }); 
-      return; 
+      setResult({ status: 'not-found', id });
+      return;
     }
     const verdict = validateAgainstTrip(booking, expectedTrip);
     if (verdict.status === 'valid') {
@@ -291,6 +314,23 @@ const DriverScanTicket = () => {
             ? "This is a live-hail ticket, not for a scheduled coach."
             : "This is a scheduled-trip ticket, not for a live ride."}
         />
+      )}
+
+      {result?.status === 'charter' && (
+        <div className="card text-center mt-4" style={{ padding: 24 }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--success-light)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+            <Check size={26} />
+          </div>
+          <span className="badge badge-success" style={{ margin: '0 auto 12px', display: 'inline-flex' }}>Charter ticket</span>
+          <div className="bold" style={{ fontSize: 18 }}>{result.charter.contactName}</div>
+          <div className="t-sm muted mb-3">{result.charter.eventType} · {result.charter.passengerCount} passengers</div>
+          <div className="divider" style={{ margin: '14px 0' }} />
+          <div className="flex justify-between t-sm mb-2"><span className="muted">Charter</span><span className="semibold">{result.charter.ref}</span></div>
+          <div className="flex justify-between t-sm mb-2"><span className="muted">Route</span><span className="semibold">{cityById(result.charter.fromCityId)?.name} → {cityById(result.charter.toCityId)?.name}</span></div>
+          <div className="flex justify-between t-sm"><span className="muted">Date</span><span className="semibold">{result.charter.travelDate}</span></div>
+          <button className="btn btn-primary mt-4" onClick={() => navigate(`/driver/charter/${result.charter.id}`)}>View manifest</button>
+          <button className="btn btn-ghost mt-2" onClick={scanAgain}>Scan another</button>
+        </div>
       )}
 
       {result?.status === 'not-found' && (

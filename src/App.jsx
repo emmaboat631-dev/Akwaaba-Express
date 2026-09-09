@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -56,6 +56,18 @@ import AdminTrips from './pages/admin/AdminTrips';
 import AdminDocuments from './pages/admin/AdminDocuments';
 import AdminRoutes from './pages/admin/AdminRoutes';
 import AdminDrivers from './pages/admin/AdminDrivers';
+import AdminSignUp from './pages/admin/AdminSignUp';
+
+const CharterRequest = lazy(() => import('./pages/CharterRequest'));
+const CharterList = lazy(() => import('./pages/CharterList'));
+const CharterDetails = lazy(() => import('./pages/CharterDetails'));
+const CharterPassengers = lazy(() => import('./pages/CharterPassengers'));
+const CharterTicket = lazy(() => import('./pages/CharterTicket'));
+const DriverCharterTrip = lazy(() => import('./pages/driver/DriverCharterTrip'));
+const AdminCharters = lazy(() => import('./pages/admin/AdminCharters'));
+const AdminCharterDetail = lazy(() => import('./pages/admin/AdminCharterDetail'));
+
+const Lazy = ({ children }) => <Suspense fallback={null}>{children}</Suspense>;
 
 const NAV_ROUTES = ['/', '/live', '/trips', '/profile'];
 const DRIVER_NAV_ROUTES = ['/driver', '/driver/earnings', '/driver/trips', '/driver/profile'];
@@ -153,6 +165,13 @@ const Shell = () => {
             <Route path="/report/:bookingId" element={<RequireAuth role="passenger"><ReportIncident /></RequireAuth>} />
             <Route path="/report" element={<RequireAuth role="passenger"><ReportIncident /></RequireAuth>} />
 
+            {/* Charter */}
+            <Route path="/charter/new" element={<RequireAuth role="passenger"><Lazy><CharterRequest /></Lazy></RequireAuth>} />
+            <Route path="/charter" element={<RequireAuth role="passenger"><Lazy><CharterList /></Lazy></RequireAuth>} />
+            <Route path="/charter/:charterId" element={<RequireAuth role="passenger"><Lazy><CharterDetails /></Lazy></RequireAuth>} />
+            <Route path="/charter/:charterId/passengers" element={<RequireAuth role="passenger"><Lazy><CharterPassengers /></Lazy></RequireAuth>} />
+            <Route path="/charter/:charterId/ticket" element={<RequireAuth role="passenger"><Lazy><CharterTicket /></Lazy></RequireAuth>} />
+
             {/* Driver */}
             <Route path="/driver" element={<RequireAuth role="driver"><DriverDashboard /></RequireAuth>} />
             <Route path="/driver/trip/:tripId/manifest" element={<RequireAuth role="driver"><DriverManifest /></RequireAuth>} />
@@ -164,6 +183,7 @@ const Shell = () => {
             <Route path="/driver/setup" element={<RequireAuth role="driver"><DriverVehicleSetup /></RequireAuth>} />
             <Route path="/driver/manage-trips" element={<RequireAuth role="driver"><DriverTripManager /></RequireAuth>} />
             <Route path="/driver/profile" element={<RequireAuth role="driver"><DriverProfile /></RequireAuth>} />
+            <Route path="/driver/charter/:charterId" element={<RequireAuth role="driver"><Lazy><DriverCharterTrip /></Lazy></RequireAuth>} />
 
                 <Route path="*" element={<RoleHome />} />
               </Routes>
@@ -186,6 +206,7 @@ const AppRoutes = () => {
       <ToastProvider>
         <Routes>
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/signup" element={<AdminSignUp />} />
           <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
             <Route index element={<AdminOverview />} />
             <Route path="users" element={<AdminUsers />} />
@@ -194,6 +215,8 @@ const AppRoutes = () => {
             <Route path="routes" element={<AdminRoutes />} />
             <Route path="drivers" element={<AdminDrivers />} />
             <Route path="documents" element={<AdminDocuments />} />
+            <Route path="charters" element={<Lazy><AdminCharters /></Lazy>} />
+            <Route path="charters/:charterId" element={<Lazy><AdminCharterDetail /></Lazy>} />
           </Route>
         </Routes>
       </ToastProvider>

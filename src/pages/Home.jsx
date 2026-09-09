@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, addDays, parseISO } from 'date-fns';
-import { ArrowDownUp, Calendar, Minus, Plus, Zap, CalendarClock, ChevronRight, Star, Search as SearchIcon } from 'lucide-react';
+import { ArrowDownUp, Calendar, Minus, Plus, Zap, CalendarClock, ChevronRight, Star, Search as SearchIcon, UsersRound } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 import { useNearbyBuses } from '../hooks/useNearbyBuses';
@@ -141,6 +141,9 @@ const Home = () => {
         </button>
         <button className={`chip${mode === 'live' ? ' active' : ''}`} onClick={() => setMode('live')}>
           <Zap size={15} /> Live now
+        </button>
+        <button className="chip" onClick={() => navigate('/charter/new')}>
+          <UsersRound size={15} /> Group charter
         </button>
       </div>
 

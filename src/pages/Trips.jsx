@@ -1,10 +1,12 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Ticket as TicketIcon, ChevronRight, X, Bus, Clock } from 'lucide-react';
+import { Ticket as TicketIcon, ChevronRight, X, Bus, Clock, UsersRound } from 'lucide-react';
 
 import { useTrips } from '../context/TripsContext';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { charterApi } from '../services/charterApi';
 import { cityById } from '../data/cities';
 import { operatorById } from '../data/operators';
 import { formatCedi, minutesToClock } from '../utils/format';
@@ -71,28 +73,72 @@ const BookingRow = ({ booking, onOpen, onCancel, countdown }) => {
   );
 };
 
+const STATUS_BADGE = {
+  pending: { bg: '#FDF1E2', color: '#D48C00', label: 'Pending' },
+  quoted: { bg: '#E2F0FD', color: '#1A73E8', label: 'Quoted' },
+  confirmed: { bg: '#E8F5EE', color: '#1FA971', label: 'Confirmed' },
+  completed: { bg: '#E8F5EE', color: '#1FA971', label: 'Completed' },
+  cancelled: { bg: '#FBE9E9', color: 'var(--red)', label: 'Cancelled' },
+};
+
+const CharterRow = ({ charter, onOpen }) => {
+  const route = `${cityById(charter.pickupCityId)?.name || '?'} → ${cityById(charter.destCityId)?.name || '?'}`;
+  const badge = STATUS_BADGE[charter.status] || STATUS_BADGE.pending;
+  return (
+    <div className="card">
+      <div className="flex items-center gap-3 card-pressable" onClick={onOpen}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--primary-light, rgba(6,57,47,0.08))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <UsersRound size={20} style={{ color: 'var(--primary)' }} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="semibold t-sm">{route}</div>
+          <div className="t-xs muted">{charter.departDate} · {charter.groupName} · {charter.passengerCount} pax</div>
+        </div>
+        <span className="badge" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
+      </div>
+    </div>
+  );
+};
+
+const isCharterPast = (c) => c.status === 'cancelled' || c.status === 'completed' || c.departDate < todayISO();
+
 const Trips = () => {
   const navigate = useNavigate();
   const { bookings, cancelBooking, refetch } = useTrips();
+  const { user } = useAuth();
   const toast = useToast();
   const [tab, setTab] = useState('upcoming');
   const loading = useBriefLoad();
   const [, setTick] = useState(0);
+  const [charters, setCharters] = useState([]);
 
   useEffect(() => {
     const timer = setInterval(() => setTick((t) => t + 1), 60000);
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (user?.id) {
+      charterApi.getMyCharters(user.id).then(setCharters).catch(console.error);
+    }
+  }, [user?.id]);
+
   const { upcoming, past } = useMemo(() => ({
     upcoming: bookings.filter((b) => !isPast(b)),
     past: bookings.filter(isPast),
   }), [bookings]);
 
+  const upcomingCharters = useMemo(() => charters.filter((c) => !isCharterPast(c)), [charters]);
+  const pastCharters = useMemo(() => charters.filter(isCharterPast), [charters]);
+
   const list = tab === 'upcoming' ? upcoming : past;
+  const charterList = tab === 'upcoming' ? upcomingCharters : pastCharters;
 
   const refresh = async () => {
     await refetch();
+    if (user?.id) {
+      charterApi.getMyCharters(user.id).then(setCharters).catch(console.error);
+    }
     toast('Up to date', 'info');
   };
 
@@ -103,14 +149,14 @@ const Trips = () => {
         <SegmentedTabs
           value={tab}
           onChange={setTab}
-          options={[{ value: 'upcoming', label: `Upcoming${upcoming.length ? ` (${upcoming.length})` : ''}` }, { value: 'past', label: 'History' }]}
+          options={[{ value: 'upcoming', label: `Upcoming${(upcoming.length + upcomingCharters.length) ? ` (${upcoming.length + upcomingCharters.length})` : ''}` }, { value: 'past', label: 'History' }]}
         />
       </div>
 
       <PullToRefresh onRefresh={refresh} className="has-nav" style={{ flex: 1, padding: '16px 20px 0' }}>
         {loading ? (
           <SkeletonList count={4} />
-        ) : list.length === 0 ? (
+        ) : (list.length === 0 && charterList.length === 0) ? (
           <EmptyState
             icon={tab === 'upcoming' ? Bus : TicketIcon}
             title={tab === 'upcoming' ? 'No upcoming trips' : 'No past trips yet'}
@@ -119,6 +165,19 @@ const Trips = () => {
           />
         ) : (
           <AnimatedList className="flex flex-col gap-3">
+            {charterList.length > 0 && (
+              <>
+                <div className="t-xs muted semibold" style={{ paddingTop: 4 }}>Group Charters</div>
+                {charterList.map((c) => (
+                  <AnimatedItem key={`charter-${c.id}`}>
+                    <CharterRow charter={c} onOpen={() => navigate(`/charter/${c.id}`)} />
+                  </AnimatedItem>
+                ))}
+              </>
+            )}
+            {list.length > 0 && charterList.length > 0 && (
+              <div className="t-xs muted semibold" style={{ paddingTop: 4 }}>Bookings</div>
+            )}
             {list.map((b) => (
               <AnimatedItem key={b.id}>
                 <BookingRow
