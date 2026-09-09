@@ -162,7 +162,7 @@ const AdminSignUp = () => {
 
       {/* Right — photo hero panel */}
       <div className="adm-login-hero">
-        <img src="/admin-hero.jpg" alt="" className="adm-login-hero-img" />
+        <img src="/admin-hero-signup.jpg" alt="" className="adm-login-hero-img" />
         <div className="adm-login-hero-overlay" />
         <div className="adm-login-hero-content">
           <div className="adm-login-quote">
@@ -183,7 +183,6 @@ const AdminSignUp = () => {
 
           <div className="adm-login-hero-caption">
             <div className="adm-login-hero-tagline">Connecting Ghana, one journey at a time</div>
-            <div className="adm-login-hero-location">Adomi Bridge, Atimpoku — Eastern Region</div>
           </div>
         </div>
       </div>

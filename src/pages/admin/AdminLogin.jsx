@@ -147,7 +147,6 @@ const AdminLogin = () => {
 
           <div className="adm-login-hero-caption">
             <div className="adm-login-hero-tagline">Connecting Ghana, one journey at a time</div>
-            <div className="adm-login-hero-location">Adomi Bridge, Atimpoku — Eastern Region</div>
           </div>
         </div>
       </div>
