@@ -52,6 +52,9 @@ const Payment = () => {
   const [paying, setPaying] = useState(false);
   const [confirmed, setConfirmed] = useState(null);
 
+  const routeLabel = isLive ? trip?.routeName : `${cityById(trip?.fromId)?.name || ''} → ${cityById(trip?.toId)?.name || ''}`;
+  const operator = operatorById(trip?.operatorId);
+
   if (!trip && !confirmed) {
     return (
       <div className="screen">
@@ -63,15 +66,16 @@ const Payment = () => {
 
   const finalize = async (reference, payment) => {
     try {
+      const savedRoute = routeLabel;
       const booking = await api.createBooking(
         { ...draft, paymentMethod: { ...payment, ref: reference }, breakdown: { total, fee: BOOKING_FEE, unit, qty } },
         user?.id,
       );
       addBooking(booking);
       relay.send('booking:new', { booking });
+      setConfirmed({ ...booking, _route: savedRoute });
       reset();
-      notifyBookingConfirmed(routeLabel, total);
-      setConfirmed(booking);
+      notifyBookingConfirmed(savedRoute, total);
     } catch {
       toast('Booking failed after payment — contact support', 'error');
       setPaying(false);
@@ -107,9 +111,6 @@ const Payment = () => {
     }
   };
 
-  const routeLabel = isLive ? trip.routeName : `${cityById(trip.fromId)?.name} → ${cityById(trip.toId)?.name}`;
-  const operator = operatorById(trip.operatorId);
-
   if (confirmed) {
     return (
       <div className="screen fade-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '40px 24px' }}>
@@ -118,7 +119,7 @@ const Payment = () => {
         </div>
         <h1 style={{ fontSize: 26, marginBottom: 8 }}>Booking Confirmed!</h1>
         <p className="muted" style={{ marginBottom: 24, maxWidth: 280 }}>
-          Your {qty} seat{qty === 1 ? '' : 's'} on {routeLabel} {qty === 1 ? 'has' : 'have'} been booked successfully.
+          Your {qty} seat{qty === 1 ? '' : 's'} on {confirmed._route || routeLabel} {qty === 1 ? 'has' : 'have'} been booked successfully.
         </p>
 
         <div className="card" style={{ width: '100%', maxWidth: 320, padding: 16, marginBottom: 32 }}>
