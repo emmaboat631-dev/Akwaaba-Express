@@ -29,20 +29,18 @@ const AdminSignUp = () => {
     const { data, error: err } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: {
+        // Passing role in metadata lets the handle_new_user trigger create
+        // the profile with role=admin from the start; the emailRedirectTo
+        // brings the confirmation link back to the admin login.
+        data: { name, role: 'admin' },
+        emailRedirectTo: `${window.location.origin}/admin/login`,
+      },
     });
     if (err) {
       setLoading(false);
       setError(err.message);
       return;
-    }
-    if (data.user) {
-      await supabase.from('profiles').upsert({
-        id: data.user.id,
-        name,
-        email,
-        role: 'admin',
-      });
     }
     setLoading(false);
     setSuccess(true);
